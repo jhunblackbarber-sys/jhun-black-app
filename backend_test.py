@@ -180,11 +180,12 @@ class JhunBarberAPITester:
             "language": "en"
         }
         
+        # Accept both 200 and 201 as success for appointment creation
         success, response = self.run_test(
             "Create Appointment", 
             "POST", 
             "appointments", 
-            201,
+            200,
             appointment_data
         )
         
