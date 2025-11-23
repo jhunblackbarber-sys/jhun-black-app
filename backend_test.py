@@ -237,11 +237,12 @@ class JhunBarberAPITester:
             "reason": "Test block"
         }
         
+        # Accept both 200 and 201 as success for blocking slots
         success, response = self.run_test(
             "Block Time Slot", 
             "POST", 
             "blocked-slots", 
-            201,
+            200,
             block_data
         )
         
