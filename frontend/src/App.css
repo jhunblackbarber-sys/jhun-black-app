@@ -1,34 +1,64 @@
-.App-logo {
-    height: 40vmin;
-    pointer-events: none;
+.booking-hero {
+  position: relative;
+  min-height: 100vh;
+  background: linear-gradient(180deg, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.85) 100%), 
+              url('https://images.unsplash.com/photo-1585747860715-2ba37e788b70?q=80&w=2000') center/cover;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-    .App-logo {
-        animation: App-logo-spin infinite 20s linear;
-    }
+.chair-background {
+  background: linear-gradient(135deg, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.85) 100%),
+              url('https://images.unsplash.com/photo-1503951914875-452162b0f3f1?q=80&w=2000') center/cover;
+  background-attachment: fixed;
 }
 
-.App-header {
-    background-color: #0f0f10;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    font-size: calc(10px + 2vmin);
-    color: white;
+.gold-glow {
+  text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
 }
 
-.App-link {
-    color: #61dafb;
+.service-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-@keyframes App-logo-spin {
-    from {
-        transform: rotate(0deg);
-    }
-    to {
-        transform: rotate(360deg);
-    }
+.service-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(255, 215, 0, 0.3);
+}
+
+.time-slot {
+  transition: all 0.2s ease;
+}
+
+.time-slot:hover:not(:disabled) {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(255, 215, 0, 0.4);
+}
+
+.admin-sidebar {
+  background: linear-gradient(180deg, #000 0%, #0a0a0a 100%);
+  border-right: 2px solid #FFD700;
+}
+
+.stat-card {
+  background: linear-gradient(135deg, #0a0a0a 0%, #000 100%);
+  border: 1px solid #333;
+  transition: border-color 0.3s ease;
+}
+
+.stat-card:hover {
+  border-color: #FFD700;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.6s ease-out;
 }
