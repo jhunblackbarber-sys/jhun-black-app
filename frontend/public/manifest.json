@@ -4,13 +4,13 @@
   "description": "Book your appointment at Jhun Black Barber - Best barber in Tampa",
   "icons": [
     {
-      "src": "https://via.placeholder.com/192x192/000000/FFD700?text=JBB",
+      "src": "https://customer-assets.emergentagent.com/job_jhunblack/artifacts/qsmwfje6_Design%20sem%20nome.png",
       "type": "image/png",
       "sizes": "192x192",
       "purpose": "any maskable"
     },
     {
-      "src": "https://via.placeholder.com/512x512/000000/FFD700?text=JBB",
+      "src": "https://customer-assets.emergentagent.com/job_jhunblack/artifacts/qsmwfje6_Design%20sem%20nome.png",
       "type": "image/png",
       "sizes": "512x512",
       "purpose": "any maskable"
