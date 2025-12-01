@@ -77,13 +77,11 @@ export default function LandingPage() {
           <img 
             src="https://customer-assets.emergentagent.com/job_jhunblack/artifacts/qsmwfje6_Design%20sem%20nome.png"
             alt="Jhun Black Barber Logo"
-            className="w-64 h-64 md:w-96 md:h-96 mx-auto mb-8 "
+            className="w-56 h-56 md:w-72 md:h-72 mx-auto mb-6"
             style={{ 
-              background: 'transparent',
-              maskImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 1 1\'%3E%3Ccircle cx=\'.5\' cy=\'.5\' r=\'.5\' fill=\'white\'/%3E%3C/svg%3E")',  // remove fundo branco
-              WebkitMaskImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 1 1\'%3E%3Ccircle cx=\'.5\' cy=\'.5\' r=\'.5\' fill=\'white\'/%3E%3C/svg%3E")',
-              filter: 'drop-shadow(0 0 30px rgba(255, 193, 7, 0.8))'
-             }}
+              filter: 'brightness(0) invert(1) drop-shadow(0 0 30px rgba(255,255,255,0.3))',
+              mixBlendMode: 'normal'
+            }}
           />
         </div>
 
