@@ -9,7 +9,7 @@ export default function LandingPage() {
 
   const content = {
     en: {
-      title: 'AGENDA ABERTA',
+      title: 'JHUN BLACK BARBER',
       subtitle: 'Best barber in Tampa • Brazilian cut with perfect finish',
       bookButton: 'BOOK NOW',
       address: '4023 W. Waters Ave Suite #1, Tampa, FL 33614',
@@ -24,7 +24,7 @@ export default function LandingPage() {
       reason3Desc: 'Easy to find in Tampa, FL',
     },
     pt: {
-      title: 'AGENDA ABERTA',
+      title: 'JHUN BLACK BARBER',
       subtitle: 'Melhor barbeiro de Tampa • Corte brasileiro com acabamento perfeito',
       bookButton: 'AGENDAR AGORA',
       address: '4023 W. Waters Ave Suite #1, Tampa, FL 33614',
@@ -54,7 +54,7 @@ export default function LandingPage() {
           filter: 'blur(8px)',
         }}
       />
-      <div className="fixed inset-0 z-0 bg-black/75" />
+      <div className="fixed inset-0 z-0 bg-black/50" />
 
       {/* Language Toggle */}
       <div className="absolute top-6 right-6 z-50">
@@ -77,20 +77,25 @@ export default function LandingPage() {
           <img 
             src="https://customer-assets.emergentagent.com/job_jhunblack/artifacts/qsmwfje6_Design%20sem%20nome.png"
             alt="Jhun Black Barber Logo"
-            className="w-48 h-48 md:w-64 md:h-64 mx-auto mb-6 drop-shadow-2xl"
-            style={{ filter: 'brightness(0) invert(1)' }}
+            className="w-64 h-64 md:w-96 md:h-96 mx-auto mb-8 "
+            style={{ 
+              background: 'transparent',
+              maskImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 1 1\'%3E%3Ccircle cx=\'.5\' cy=\'.5\' r=\'.5\' fill=\'white\'/%3E%3C/svg%3E")',  // remove fundo branco
+              WebkitMaskImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 1 1\'%3E%3Ccircle cx=\'.5\' cy=\'.5\' r=\'.5\' fill=\'white\'/%3E%3C/svg%3E")',
+              filter: 'drop-shadow(0 0 30px rgba(255, 193, 7, 0.8))'
+             }}
           />
         </div>
 
-        {/* Main Title - AGENDA ABERTA */}
+        {/* Main Title - JHUN BLACK BARBER */}
         <h1 
           data-testid="main-title"
           className="text-[#FFC107] text-6xl sm:text-7xl md:text-8xl lg:text-9xl font-bold mb-6 animate-fade-in-up"
           style={{
             animationDelay: '0.2s',
             fontFamily: 'Bebas Neue, cursive',
-            letterSpacing: '0.05em',
-            textShadow: '0 0 30px rgba(255, 193, 7, 0.6), 0 0 60px rgba(255, 193, 7, 0.4)'
+            letterSpacing: '0.08em',
+            textShadow: '0 0 8px rgba(255, 193, 7, 0.4), 0 0 16px rgba(255, 193, 7, 0.2), 2px 2px 4px rgba(0, 0, 0, 0.6)'
           }}
         >
           {t.title}
