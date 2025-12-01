@@ -73,17 +73,30 @@ export default function LandingPage() {
       {/* Hero Section */}
       <div className="relative z-10 flex flex-col items-center justify-center min-h-screen px-4 text-center">
         {/* Logo - Hat, Glasses, Mustache */}
-        <div className="mb-8 animate-fade-in-up">
+        <div className="mb-4 animate-fade-in-up">
           <img 
             src="https://customer-assets.emergentagent.com/job_jhunblack/artifacts/qsmwfje6_Design%20sem%20nome.png"
             alt="Jhun Black Barber Logo"
-            className="w-56 h-56 md:w-72 md:h-72 mx-auto mb-6"
+            className="w-48 h-48 md:w-64 md:h-64 mx-auto"
             style={{ 
               filter: 'brightness(0) invert(1) drop-shadow(0 0 30px rgba(255,255,255,0.3))',
               mixBlendMode: 'normal'
             }}
           />
         </div>
+
+        {/* Business Name */}
+        <h2 
+          className="text-[#FFC107] text-4xl md:text-5xl lg:text-6xl font-bold mb-8 animate-fade-in-up"
+          style={{
+            animationDelay: '0.1s',
+            fontFamily: 'Bebas Neue, cursive',
+            letterSpacing: '0.15em',
+            textShadow: '0 0 20px rgba(255, 193, 7, 0.4)'
+          }}
+        >
+          JHUN BLACK BARBER
+        </h2>
 
         {/* Main Title - JHUN BLACK BARBER */}
         <h1 
