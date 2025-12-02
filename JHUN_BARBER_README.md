@@ -433,7 +433,7 @@ db.blocked_slots.deleteMany({})
 Jhun Black Barber  
 4023 W. Waters Ave Suite #1  
 Tampa, FL 33614  
-📱 (813) 735-2601  
+📱 (813) 735-2691  
 📸 Instagram: @jhun_black_hair_cut_
 
 ---

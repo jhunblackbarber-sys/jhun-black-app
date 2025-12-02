@@ -13,7 +13,7 @@ export default function LandingPage() {
       subtitle: 'Best barber in Tampa • Brazilian cut with perfect finish',
       bookButton: 'BOOK NOW',
       address: '4023 W. Waters Ave Suite #1, Tampa, FL 33614',
-      phone: '(813) 735-2601',
+      phone: '(813) 735-2691',
       hours: 'Hours: Mon-Sat 9:00 AM - 9:00 PM',
       whyUs: 'WHY CHOOSE US',
       reason1: 'Brazilian Expertise',
