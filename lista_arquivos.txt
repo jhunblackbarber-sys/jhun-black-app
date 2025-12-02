@@ -1,0 +1,62 @@
+ARQUIVOS NECESSÁRIOS PARA O DEPLOY
+===================================
+
+COPIE ESTES ARQUIVOS DO EMERGENT PARA SEU REPOSITÓRIO:
+
+📁 RAIZ (/)
+├── .gitignore
+├── railway.json
+├── vercel.json
+├── README.md
+├── GUIA_DEPLOY_GRATUITO.md
+├── INICIO_RAPIDO.md
+├── COMANDOS_GIT.md
+└── JHUN_BARBER_README.md
+
+📁 BACKEND (/backend/)
+├── server.py
+├── requirements.txt
+└── .env (criar localmente - NÃO comitar)
+
+📁 FRONTEND (/frontend/)
+├── package.json
+├── tailwind.config.js
+├── postcss.config.js
+├── craco.config.js
+├── .env (criar localmente - NÃO comitar)
+│
+├── 📁 public/
+│   ├── index.html
+│   ├── manifest.json
+│   └── service-worker.js
+│
+└── 📁 src/
+    ├── index.js
+    ├── index.css
+    ├── App.js
+    ├── App.css
+    │
+    ├── 📁 components/ui/ (TODOS os arquivos .jsx)
+    │
+    ├── 📁 pages/
+    │   ├── LandingPage.jsx
+    │   ├── BookingFlow.jsx
+    │   ├── AdminLogin.jsx
+    │   └── AdminDashboard.jsx
+    │
+    └── 📁 hooks/
+        └── use-toast.js
+
+TOTAL: ~60 arquivos
+
+⚠️ NÃO COPIE:
+- node_modules/
+- .git/
+- test_reports/
+- .emergent/
+- __pycache__/
+- *.pyc
+- arquivos .env
+
+✅ COMO BAIXAR:
+Use o Emergent File Explorer ou baixe via comandos Git
