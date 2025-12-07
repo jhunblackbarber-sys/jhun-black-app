@@ -75,6 +75,13 @@ class LoginResponse(BaseModel):
     success: bool
     token: Optional[str] = None
 
+class MultiBlockedSlotCreate(BaseModel):
+    dates: List[str]  # Lista de datas YYYY-MM-DD
+    start_time: str
+    end_time: str
+    reason: Optional[str] = None
+
+
 # ==================== INPUT MODELS ====================
 
 class AppointmentCreate(BaseModel):
@@ -328,6 +335,29 @@ async def create_blocked_slot(blocked_data: BlockedSlotCreate):
     await db.blocked_slots.insert_one(doc)
     return blocked_slot
 
+from pydantic import BaseModel
+from typing import List
+
+class MultiBlockedSlotCreate(BaseModel):
+    dates: List[str]  # Lista de datas no formato YYYY-MM-DD
+    start_time: str
+    end_time: str
+    reason: Optional[str] = None
+
+@api_router.post("/blocked-slots/multi", response_model=List[BlockedSlot])
+async def create_multi_blocked_slots(blocked_data: MultiBlockedSlotCreate):
+    blocked_slots = []
+    for date in blocked_data.dates:
+        slot = BlockedSlot(
+            date=date,
+            start_time=blocked_data.start_time,
+            end_time=blocked_data.end_time,
+            reason=blocked_data.reason
+        )
+        await db.blocked_slots.insert_one(slot.model_dump())
+        blocked_slots.append(slot)
+    return blocked_slots
+
 @api_router.get("/blocked-slots", response_model=List[BlockedSlot])
 async def get_blocked_slots(date: Optional[str] = None):
     query = {}
@@ -343,6 +373,7 @@ async def delete_blocked_slot(slot_id: str):
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Blocked slot not found")
     return {"success": True}
+
 
 # ========== CUSTOMERS ==========
 
