@@ -19,11 +19,21 @@ mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
 
+# -------------------- FastAPI app --------------------
 # Create the main app without a prefix
 app = FastAPI()
 
-# Create a router with the /api prefix
+# -------------------- Rota de monitoramento --------------------
+# Apenas para o UptimeRobot manter o backend acordado
+@app.get("/ping")
+def ping():
+    return {"status": "ok"}
+
+# -------------------- Criação do router --------------------
 api_router = APIRouter(prefix="/api")
+
+# -------------------- Incluir router no app --------------------
+app.include_router(api_router)
 
 # ==================== MODELS ====================
 
