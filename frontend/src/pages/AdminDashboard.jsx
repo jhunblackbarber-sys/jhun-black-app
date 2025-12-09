@@ -36,7 +36,7 @@ export default function AdminDashboard() {
   const [appointments, setAppointments] = useState([]);
   const [customers, setCustomers] = useState([]);
   const [blockedSlots, setBlockedSlots] = useState([]);
-  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [selectedDates, setSelectedDates] = useState([]);
   const [loading, setLoading] = useState(false);
   
   // Block slot form
@@ -258,7 +258,7 @@ export default function AdminDashboard() {
               <div className="mb-6">
                 <h2 className="text-white text-xl font-bold mb-4">Filter by Date</h2>
                 <Calendar
-                  mode="single"
+                  mode="multiple"
                   selected={selectedDate}
                   onSelect={setSelectedDate}
                   className="rounded-md border border-white/20 bg-black/40 text-white"
