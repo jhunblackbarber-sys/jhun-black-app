@@ -26,7 +26,11 @@ app = FastAPI()
 # -------------------- Rota de monitoramento --------------------
 # Apenas para o UptimeRobot manter o backend acordado
 @app.get("/ping")
+@app.head("/ping") 
 def ping():
+    # O método HEAD não espera um corpo de resposta,
+    # mas o FastAPI lida com isso automaticamente.
+    # O status 200 (OK) será enviado.
     return {"status": "ok"}
 
 # -------------------- Criação do router --------------------
