@@ -110,11 +110,12 @@ class AppointmentCreate(BaseModel):
 class AppointmentUpdate(BaseModel):
     status: str
 
-class BlockedSlotCreate(BaseModel):
-    date: str
-    start_time: str
-    end_time: str
-    reason: Optional[str] = None
+class BlockedSlotRangeCreate(BaseModel):
+    start_date: str = Field(..., description="Data de início do bloqueio (formato YYYY-MM-DD)")
+    end_date: str = Field(..., description="Data de fim do bloqueio (formato YYYY-MM-DD)")
+    start_time: str = Field(..., pattern=r'^\d{2}:\d{2}$', description="Hora de início do bloqueio (formato HH:MM)")
+    end_time: str = Field(..., pattern=r'^\d{2}:\d{2}$', description="Hora de fim do bloqueio (formato HH:MM)")
+    reason: Optional[str] = None
 
 # ==================== HELPER FUNCTIONS ====================
 
@@ -342,35 +343,51 @@ async def get_available_slots(date: str, service_id: str):
 
 # ========== BLOCKED SLOTS ==========
 
-@api_router.post("/blocked-slots", response_model=BlockedSlot)
-async def create_blocked_slot(blocked_data: BlockedSlotCreate):
-    blocked_slot = BlockedSlot(**blocked_data.model_dump())
-    doc = blocked_slot.model_dump()
-    await db.blocked_slots.insert_one(doc)
-    return blocked_slot
+@api_router.post("/blocked-slots", status_code=201)
+async def create_blocked_slot_range(data: BlockedSlotRangeCreate):
+    
+    # 1. Converter datas de string para objetos datetime.date
+    try:
+        start_date = datetime.strptime(data.start_date, '%Y-%m-%d').date()
+        end_date = datetime.strptime(data.end_date, '%Y-%m-%d').date()
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Formato de data inválido. Use YYYY-MM-DD.")
+        
+    # 2. Garantir que a data de início não seja posterior à data de fim
+    if start_date > end_date:
+        raise HTTPException(status_code=400, detail="Data de início não pode ser posterior à data de fim.")
 
-from pydantic import BaseModel
-from typing import List
+    # 3. Iterar por cada dia no intervalo
+    # Calcula o número total de dias, incluindo a data final (+1)
+    num_days = (end_date - start_date).days + 1
+    
+    blocked_slots_to_insert = []
 
-class MultiBlockedSlotCreate(BaseModel):
-    dates: List[str]  # Lista de datas no formato YYYY-MM-DD
-    start_time: str
-    end_time: str
-    reason: Optional[str] = None
+    for i in range(num_days):
+        current_date = start_date + timedelta(days=i)
+        
+        # Cria um objeto para ser inserido no MongoDB para o dia atual
+        slot_data = {
+            # Usando o modelo BlockedSlot como base para garantir consistência
+            "id": str(uuid.uuid4()),
+            "date": current_date.strftime('%Y-%m-%d'), # Formato string para salvar no DB
+            "start_time": data.start_time,
+            "end_time": data.end_time,
+            "reason": data.reason,
+            "created_at": datetime.now(timezone.utc).isoformat(),
+        }
+        blocked_slots_to_insert.append(slot_data)
 
-@api_router.post("/blocked-slots/multi", response_model=List[BlockedSlot])
-async def create_multi_blocked_slots(blocked_data: MultiBlockedSlotCreate):
-    blocked_slots = []
-    for date in blocked_data.dates:
-        slot = BlockedSlot(
-            date=date,
-            start_time=blocked_data.start_time,
-            end_time=blocked_data.end_time,
-            reason=blocked_data.reason
-        )
-        await db.blocked_slots.insert_one(slot.model_dump())
-        blocked_slots.append(slot)
-    return blocked_slots
+    # 4. Inserir todos os slots bloqueados de uma vez
+    if blocked_slots_to_insert:
+        try:
+            await db.blocked_slots.insert_many(blocked_slots_to_insert)
+        except Exception as e:
+            logger.error(f"Database error during bulk insert: {e}")
+            raise HTTPException(status_code=500, detail="Erro ao salvar bloqueios no banco de dados.")
+
+    return {"message": f"Bloqueio criado com sucesso para {num_days} dias."}
+
 
 @api_router.get("/blocked-slots", response_model=List[BlockedSlot])
 async def get_blocked_slots(date: Optional[str] = None):
