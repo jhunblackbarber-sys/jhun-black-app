@@ -35,6 +35,8 @@ export default function AdminDashboard() {
   });
   const [appointments, setAppointments] = useState([]);
   const [customers, setCustomers] = useState([]);
+
+  // Block slot form
   const [blockSlotData, setBlockSlotData] = useState({
     start_date: format(new Date(), 'yyyy-MM-dd'), // Data de início
     end_date: format(new Date(), 'yyyy-MM-dd'),   // Data de fim
@@ -44,15 +46,9 @@ export default function AdminDashboard() {
   });
   const [selectedDates, setSelectedDates] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [blockedSlots, setBlockedSlots] = useState([]);
   
-  // Block slot form
-  const [blockSlotData, setBlockSlotData] = useState({
-    date: format(new Date(), 'yyyy-MM-dd'),
-    start_time: '09:00',
-    end_time: '12:00',
-    reason: ''
-  });
-
+  
   useEffect(() => {
     const token = localStorage.getItem('admin_token');
     if (!token) {
