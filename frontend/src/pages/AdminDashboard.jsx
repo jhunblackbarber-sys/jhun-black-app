@@ -376,17 +376,6 @@ export default function AdminDashboard() {
                 </h2>
                 
                 <form onSubmit={handleBlockSlot} className="space-y-4">
-                  <div>
-                    <Label htmlFor="block-date" className="text-white">Date</Label>
-                    <Input
-                      id="block-date"
-                      data-testid="block-date-input"
-                      type="date"
-                      value={blockSlotData.date}
-                      onChange={(e) => setBlockSlotData({...blockSlotData, date: e.target.value})}
-                      required
-                      className="bg-white/10 border-white/20 text-white mt-2"
-                    />
                     
                   </div>
                   <div className="grid grid-cols-2 gap-4"> 
