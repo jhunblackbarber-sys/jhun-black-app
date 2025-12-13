@@ -111,11 +111,11 @@ class AppointmentUpdate(BaseModel):
     status: str
 
 class BlockedSlotRangeCreate(BaseModel):
-    start_date: str = Field(..., description="Data de início do bloqueio (formato YYYY-MM-DD)")
-    end_date: str = Field(..., description="Data de fim do bloqueio (formato YYYY-MM-DD)")
-    start_time: str = Field(..., pattern=r'^\d{2}:\d{2}$', description="Hora de início do bloqueio (formato HH:MM)")
-    end_time: str = Field(..., pattern=r'^\d{2}:\d{2}$', description="Hora de fim do bloqueio (formato HH:MM)")
-    reason: Optional[str] = None
+    start_date: str = Field(..., description="Data de início do bloqueio (formato YYYY-MM-DD)")
+    end_date: str = Field(..., description="Data de fim do bloqueio (formato YYYY-MM-DD)")
+    start_time: str = Field(..., pattern=r'^\d{2}:\d{2}$', description="Hora de início do bloqueio (formato HH:MM)")
+    end_time: str = Field(..., pattern=r'^\d{2}:\d{2}$', description="Hora de fim do bloqueio (formato HH:MM)")
+    reason: Optional[str] = None
 
 # ==================== HELPER FUNCTIONS ====================
 
