@@ -35,7 +35,13 @@ export default function AdminDashboard() {
   });
   const [appointments, setAppointments] = useState([]);
   const [customers, setCustomers] = useState([]);
-  const [blockedSlots, setBlockedSlots] = useState([]);
+  const [blockSlotData, setBlockSlotData] = useState({
+    start_date: format(new Date(), 'yyyy-MM-dd'), // Data de início
+    end_date: format(new Date(), 'yyyy-MM-dd'),   // Data de fim
+    start_time: '09:00',
+    end_time: '12:00',
+    reason: ''
+  });
   const [selectedDates, setSelectedDates] = useState([]);
   const [loading, setLoading] = useState(false);
   
@@ -385,7 +391,32 @@ export default function AdminDashboard() {
                       required
                       className="bg-white/10 border-white/20 text-white mt-2"
                     />
+                    
                   </div>
+                  <div className="grid grid-cols-2 gap-4"> 
+                  <div>
+                    <Label htmlFor="start-date" className="text-white">Start Date</Label>
+                    <Input
+                      id="start-date"
+                      type="date"
+                      value={blockSlotData.start_date}
+                      onChange={(e) => setBlockSlotData({...blockSlotData, start_date: e.target.value})}
+                      required
+                      className="bg-white/10 border-white/20 text-white mt-2"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="end-date" className="text-white">End Date</Label>
+                    <Input
+                      id="end-date"
+                      type="date"
+                      value={blockSlotData.end_date}
+                      onChange={(e) => setBlockSlotData({...blockSlotData, end_date: e.target.value})}
+                      required
+                      className="bg-white/10 border-white/20 text-white mt-2"
+                    />
+                  </div>
+                </div>
                   
                   <div className="grid grid-cols-2 gap-4">
                     <div>
