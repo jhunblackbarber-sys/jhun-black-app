@@ -58,10 +58,11 @@ export default function AdminDashboard() {
   }, []);
 
   useEffect(() => {
-    if (selectedDate) {
-      fetchAppointmentsByDate();
-    }
-  }, [selectedDate]);
+    // Agora checa se selectedDates existe E tem pelo menos uma data
+    if (selectedDates && selectedDates.length > 0) { 
+      fetchAppointmentsByDate(selectedDates[0]); // Pega apenas a primeira data para a busca de compromissos
+    }
+  }, [selectedDates]); // Usa o novo nome do estado
 
   const fetchDashboardData = async () => {
     try {
@@ -82,17 +83,19 @@ export default function AdminDashboard() {
     }
   };
 
-  const fetchAppointmentsByDate = async () => {
-    try {
-      const dateStr = format(selectedDate, 'yyyy-MM-dd');
-      const response = await axios.get(`${API}/appointments`, {
-        params: { date: dateStr }
-      });
-      setAppointments(response.data);
-    } catch (error) {
-      console.error('Error fetching appointments:', error);
-    }
-  };
+ // A função agora aceita a data que deve ser buscada como argumento
+  const fetchAppointmentsByDate = async (dateToFetch) => { 
+    try {
+      // Usa o argumento passado (que será a primeira data selecionada)
+      const dateStr = format(dateToFetch, 'yyyy-MM-dd'); 
+      const response = await axios.get(`${API}/appointments`, {
+        params: { date: dateStr }
+      });
+      setAppointments(response.data);
+    } catch (error) {
+      console.error('Error fetching appointments:', error);
+    }
+  };
 
   const handleStatusUpdate = async (appointmentId, newStatus) => {
     try {
@@ -258,18 +261,23 @@ export default function AdminDashboard() {
               <div className="mb-6">
                 <h2 className="text-white text-xl font-bold mb-4">Filter by Date</h2>
                 <Calendar
-                  mode="multiple"
-                  selected={selectedDate}
-                  onSelect={setSelectedDate}
-                  className="rounded-md border border-white/20 bg-black/40 text-white"
-                  data-testid="admin-calendar"
-                />
+                  mode="multiple" // Mantém a seleção de múltiplos dias
+                  selected={selectedDates} // Usa o novo estado
+                  onSelect={setSelectedDates} // Usa o novo setter
+                  className="rounded-md border border-white/20 bg-black/40 text-white"
+                  data-testid="admin-calendar"
+                />
               </div>
 
               <div className="space-y-4">
-                <h3 className="text-white text-lg font-bold">
-                  Appointments for {format(selectedDate, 'MMMM dd, yyyy')}
-                </h3>
+               <h3 className="text-white text-lg font-bold">
+                  {/* Mostra a primeira data selecionada ou 'Today' se nada for selecionado */}
+                  Appointments for {
+                    selectedDates && selectedDates.length > 0 
+                      ? format(selectedDates[0], 'MMMM dd, yyyy') 
+                      : format(new Date(), 'MMMM dd, yyyy') // Fallback para data de hoje
+                  }
+                </h3>
                 
                 {appointments.length === 0 ? (
                   <p className="text-white/50 text-center py-8">No appointments for this date</p>
