@@ -377,7 +377,6 @@ export default function AdminDashboard() {
                 
                 <form onSubmit={handleBlockSlot} className="space-y-4">
                     
-                  </div>
                   <div className="grid grid-cols-2 gap-4"> 
                   <div>
                     <Label htmlFor="start-date" className="text-white">Start Date</Label>
