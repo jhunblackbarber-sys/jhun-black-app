@@ -275,23 +275,23 @@ async def get_available_slots(date: str, service_id: str):
     
     # Business hours: 9:00 AM - 9:00 PM (Monday to Saturday)
     start_hour = 9
-    end_hour = 21
+    end_hour = 21  # 21 (9 PM) permite o último slot começar às 20:30 e terminar às 21:00 (para um serviço de 30m)
     slot_interval = 30  # 30-minute intervals
     
-    # Generate all possible slots
-    slots = []
+    # Generate all possible slots (em formato 24h para facilitar o cálculo)
+    slots_24h = []
     current_minutes = start_hour * 60
     end_minutes = end_hour * 60
     
     while current_minutes < end_minutes:
         hour = current_minutes // 60
         minute = current_minutes % 60
-        time_slot = f"{hour:02d}:{minute:02d}"
+        time_slot_24h = f"{hour:02d}:{minute:02d}"
         
         # Check if this slot + duration fits within business hours
         end_time_minutes = current_minutes + duration
         if end_time_minutes <= end_minutes:
-            slots.append(time_slot)
+            slots_24h.append(time_slot_24h)
         
         current_minutes += slot_interval
     
@@ -305,10 +305,10 @@ async def get_available_slots(date: str, service_id: str):
     blocked_slots = await db.blocked_slots.find({"date": date}, {"_id": 0}).to_list(1000)
     
     # Filter out unavailable slots
-    available_slots = []
-    for slot in slots:
+    available_slots_24h = []
+    for slot_24h in slots_24h:
         is_available = True
-        slot_hour, slot_minute = map(int, slot.split(':'))
+        slot_hour, slot_minute = map(int, slot_24h.split(':'))
         slot_minutes = slot_hour * 60 + slot_minute
         slot_end_minutes = slot_minutes + duration
         
@@ -337,9 +337,17 @@ async def get_available_slots(date: str, service_id: str):
                     break
         
         if is_available:
-            available_slots.append(slot)
+            available_slots_24h.append(slot_24h)
     
-    return {"available_slots": available_slots}
+    # NOVO PASSO: Formatar os slots disponíveis para AM/PM
+    available_slots_12h = []
+    for slot_24h in available_slots_24h:
+        # Cria um objeto hora a partir da string 24h. Usamos uma data base arbitrária.
+        time_obj = datetime.strptime(slot_24h, "%H:%M")
+        # Formata para o padrão 12 horas (Ex: 09:00 AM, 08:30 PM)
+        available_slots_12h.append(time_obj.strftime("%I:%M %p"))
+    
+    return {"available_slots": available_slots_12h}
 
 # ========== BLOCKED SLOTS ==========
 
