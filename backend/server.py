@@ -3,6 +3,7 @@ from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 import os
+from twilio.rest import Client
 import logging
 from pathlib import Path
 from pydantic import BaseModel, Field, ConfigDict
@@ -18,6 +19,20 @@ load_dotenv(ROOT_DIR / '.env')
 mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
+
+# --- Configuração do Twilio ---
+TWILIO_ACCOUNT_SID = os.getenv('TWILIO_ACCOUNT_SID')
+TWILIO_AUTH_TOKEN = os.getenv('TWILIO_AUTH_TOKEN')
+TWILIO_FROM_NUMBER = os.getenv('TWILIO_FROM_NUMBER') # whatsapp:+1...
+TWILIO_TO_NUMBER = os.getenv('TWILIO_TO_NUMBER')     # whatsapp:+1... (Seu número)
+
+# Inicializa o cliente Twilio
+try:
+    twilio_client = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
+    print("Twilio Client Initialized Successfully")
+except Exception as e:
+    print(f"Error initializing Twilio Client: {e}")
+    twilio_client = None  # Garante que não haverá erro se as credenciais estiverem faltando
 
 # -------------------- FastAPI app --------------------
 # Create the main app without a prefix
@@ -220,22 +235,45 @@ async def create_appointment(appointment_data: AppointmentCreate):
         )
         await db.customers.insert_one(new_customer.model_dump())
     
-    # Send mock notifications
-    notification_data = {
-        "service": service['name'],
-        "date": date,
-        "time": time,
-        "customer_name": appointment_data.customer_name
-    }
-    
-    send_notification_mock("sms", appointment_data.customer_phone, notification_data, appointment_data.language)
-    if appointment_data.customer_email:
-        send_notification_mock("email", appointment_data.customer_email, notification_data, appointment_data.language)
-    
-    # Notify admin (mock)
-    send_notification_mock("whatsapp", "admin", notification_data, "en")
-    
-    return appointment
+    # Dados para Notificações
+    notification_data = {
+        "service": service['name'],
+        "date": date,
+        "time": time,
+        "customer_name": appointment_data.customer_name
+    }
+    
+    # Notificações ao Cliente (Mocks - Manter por enquanto)
+    send_notification_mock("sms", appointment_data.customer_phone, notification_data, appointment_data.language)
+    if appointment_data.customer_email:
+        send_notification_mock("email", appointment_data.customer_email, notification_data, appointment_data.language)
+    
+    # Notificação ao Admin (Twilio WhatsApp REAL)
+    # Verifica se o cliente Twilio foi inicializado corretamente e se os números de destino/origem estão configurados
+    if twilio_client and TWILIO_TO_NUMBER and TWILIO_FROM_NUMBER:
+        try:
+            # Mensagem para o seu marido/admin
+            message_body = f"""
+                🚨 NOVO AGENDAMENTO! 🚨
+
+                    Serviço: {service['name']}
+                    Cliente: {appointment_data.customer_name}
+                    Data: {date} às {time}
+                    Telefone: {appointment_data.customer_phone}
+                    """
+
+            message = twilio_client.messages.create(
+                from_=TWILIO_FROM_NUMBER,
+                to=TWILIO_TO_NUMBER,
+                body=message_body
+            )
+            # O print é útil para debug no log do Render
+            print(f"WhatsApp notification sent. SID: {message.sid}")
+        except Exception as e:
+            # Não queremos falhar o agendamento se o WhatsApp falhar
+            print(f"Error sending Twilio WhatsApp notification: {e}")
+    
+    return appointment
 
 @api_router.get("/appointments", response_model=List[Appointment])
 async def get_appointments(date: Optional[str] = None, status: Optional[str] = None):
