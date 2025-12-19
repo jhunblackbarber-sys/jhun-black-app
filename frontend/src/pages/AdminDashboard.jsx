@@ -27,6 +27,8 @@ const API = `${BACKEND_URL}/api`;
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
+  const [editingCustomer, setEditingCustomer] = useState(null);
+  const [editFormData, setEditFormData] = useState({ full_name: '', phone: '', email: '' });
   const [stats, setStats] = useState({
     today_appointments: 0,
     total_customers: 0,
@@ -165,7 +167,35 @@ export default function AdminDashboard() {
         return 'text-white';
     }
   };
+  
+const handleCancel = async (id) => {
+  try {
+    // Chamada para a nova rota que criámos no backend
+    await axios.patch(`${API}/appointments/${id}`, { status: 'cancelled' });
+    toast.success('Agendamento cancelado e horário libertado');
+    // Atualiza a lista na tela
+    fetchAppointments();
+    fetchStats();
+  } catch (error) {
+    console.error('Error cancelling appointment:', error);
+    toast.error('Erro ao cancelar agendamento');
+  }
+};
 
+  const handleUpdateCustomer = async (e) => {
+  e.preventDefault();
+  try {
+    // Chamada para a rota PUT que criámos no server.py 
+    await axios.put(`${API}/customers/${editingCustomer.id}`, editFormData);
+    toast.success('Cliente atualizado com sucesso!');
+    setEditingCustomer(null); // Fecha o modo de edição
+    fetchCustomers(); // Recarrega a lista
+  } catch (error) {
+    console.error('Erro ao atualizar cliente:', error);
+    toast.error('Erro ao atualizar dados do cliente');
+  }
+};
+  
   return (
     <div className="min-h-screen bg-black">
       {/* Header */}
@@ -303,23 +333,31 @@ export default function AdminDashboard() {
                           {apt.status === 'scheduled' && (
                             <div className="flex gap-2">
                               <Button
-                                data-testid={`complete-btn-${apt.id}`}
                                 size="sm"
-                                onClick={() => handleStatusUpdate(apt.id, 'completed')}
-                                className="bg-green-600 hover:bg-green-700 text-white"
+                                onClick={() => handleComplete(appointment.id)}
+                                className="bg-[#00df9a] hover:bg-[#00bf83] text-black gap-2"
                               >
-                                <CheckCircle className="w-4 h-4 mr-1" />
+                                <CheckCircle className="w-4 h-4" />
                                 Complete
                               </Button>
                               <Button
-                                data-testid={`no-show-btn-${apt.id}`}
                                 size="sm"
-                                onClick={() => handleStatusUpdate(apt.id, 'no-show')}
+                                onClick={() => handleNoShow(appointment.id)}
                                 variant="outline"
-                                className="border-red-500 text-red-500 hover:bg-red-500 hover:text-white"
+                                className="border-red-500 text-red-500 hover:bg-red-500 hover:text-white gap-2"
                               >
-                                <XCircle className="w-4 h-4 mr-1" />
+                                <XCircle className="w-4 h-4" />
                                 No-show
+                              </Button>
+                              {/* NOVO BOTÃO DE CANCELAR ABAIXO */}
+                              <Button
+                                size="sm"
+                                onClick={() => handleCancel(appointment.id)}
+                                variant="ghost"
+                                className="text-gray-400 hover:text-white hover:bg-white/10 gap-2"
+                              >
+                                <Ban className="w-4 h-4" />
+                                Cancel
                               </Button>
                             </div>
                           )}
@@ -356,6 +394,22 @@ export default function AdminDashboard() {
                           {customer.last_visit && (
                             <p className="text-white/50 text-sm">Last: {customer.last_visit}</p>
                           )}
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => {
+                              setEditingCustomer(customer);
+                              setEditFormData({
+                                full_name: customer.full_name,
+                                phone: customer.phone,
+                                email: customer.email || ''
+                              });
+                            }}
+                            className="text-[#FFD700] hover:bg-[#FFD700]/10 mt-2 gap-2"
+                            >
+                            <Plus className="w-4 h-4" />
+                            Edit
+                          </Button>
                         </div>
                       </div>
                     </Card>
@@ -490,6 +544,44 @@ export default function AdminDashboard() {
           </TabsContent>
         </Tabs>
       </div>
+      {/* MODAL DE EDIÇÃO DE CLIENTE */}
+      {editingCustomer && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+          <Card className="bg-[#111] border-white/10 p-6 w-full max-w-md">
+            <h3 className="text-xl font-bold text-white mb-4">Editar Cliente</h3>
+            <form onSubmit={handleUpdateCustomer} className="space-y-4">
+              <div>
+                <Label className="text-white">Nome Completo</Label>
+                <Input 
+                  value={editFormData.full_name}
+                  onChange={(e) => setEditFormData({...editFormData, full_name: e.target.value})}
+                  className="bg-black border-white/10 text-white"
+                />
+              </div>
+              <div>
+                <Label className="text-white">Telefone</Label>
+                <Input 
+                  value={editFormData.phone}
+                  onChange={(e) => setEditFormData({...editFormData, phone: e.target.value})}
+                  className="bg-black border-white/10 text-white"
+                />
+              </div>
+              <div>
+                <Label className="text-white">E-mail</Label>
+                <Input 
+                  value={editFormData.email}
+                  onChange={(e) => setEditFormData({...editFormData, email: e.target.value})}
+                  className="bg-black border-white/10 text-white"
+                />
+              </div>
+              <div className="flex gap-2 pt-2">
+                <Button type="submit" className="flex-1 bg-[#FFD700] text-black hover:bg-[#FFD700]/80">Salvar</Button>
+                <Button type="button" onClick={() => setEditingCustomer(null)} variant="outline" className="flex-1 text-white border-white/20">Cancelar</Button>
+              </div>
+            </form>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }
