@@ -335,30 +335,28 @@ async def update_appointment(appointment_id: str, update_data: AppointmentUpdate
 
 # ========== AVAILABLE SLOTS ==========
 
-@app.get("/available-slots")
-def get_available_slots(date: str):
-    # Converte a string da data para um objeto datetime
-    date_obj = datetime.strptime(date, "%Y-%m-%d")
-    
-    # 6 representa Domingo (0=Segunda, 1=Terça...)
-    if date_obj.weekday() == 6:
-        return [] # Retorna lista vazia, então o site dirá "Sem horários"
-
 @api_router.get("/available-slots")
 async def get_available_slots(date: str, service_id: str):
-    # Get service duration
+    # 1. Bloqueio de Domingo
+    try:
+        date_obj = datetime.strptime(date, "%Y-%m-%d")
+        if date_obj.weekday() == 6:  # 6 representa Domingo
+            return {"available_slots": [], "message": "Closed on Sundays"}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail="Invalid date format")
+
+    # 2. Busca o serviço para saber a duração
     service = await db.services.find_one({"id": service_id}, {"_id": 0})
     if not service:
         raise HTTPException(status_code=404, detail="Service not found")
     
     duration = service['duration_minutes']
     
-    # Business hours: 9:00 AM - 9:00 PM (Monday to Saturday)
+    # Horário de funcionamento: 09:00 às 21:00
     start_hour = 9
-    end_hour = 21  # 21 (9 PM) permite o último slot começar às 20:30 e terminar às 21:00 (para um serviço de 30m)
-    slot_interval = 30  # 30-minute intervals
+    end_hour = 21
+    slot_interval = 30
     
-    # Generate all possible slots (em formato 24h para facilitar o cálculo)
     slots_24h = []
     current_minutes = start_hour * 60
     end_minutes = end_hour * 60
@@ -368,23 +366,18 @@ async def get_available_slots(date: str, service_id: str):
         minute = current_minutes % 60
         time_slot_24h = f"{hour:02d}:{minute:02d}"
         
-        # Check if this slot + duration fits within business hours
-        end_time_minutes = current_minutes + duration
-        if end_time_minutes <= end_minutes:
+        if (current_minutes + duration) <= end_minutes:
             slots_24h.append(time_slot_24h)
-        
         current_minutes += slot_interval
     
-    # Get existing appointments for this date
+    # Busca agendamentos e bloqueios
     appointments = await db.appointments.find({
         "date": date,
         "status": {"$in": ["scheduled", "completed"]}
-    }, {"_id": 0}).to_list(1000)
+    }).to_list(1000)
     
-    # Get blocked slots for this date
-    blocked_slots = await db.blocked_slots.find({"date": date}, {"_id": 0}).to_list(1000)
+    blocked_slots = await db.blocked_slots.find({"date": date}).to_list(1000)
     
-    # Filter out unavailable slots
     available_slots_24h = []
     for slot_24h in slots_24h:
         is_available = True
@@ -392,54 +385,47 @@ async def get_available_slots(date: str, service_id: str):
         slot_minutes = slot_hour * 60 + slot_minute
         slot_end_minutes = slot_minutes + duration
         
-        # Check against appointments
+        # Verifica contra agendamentos (Suporta 24h e AM/PM)
         for apt in appointments:
             try:
-                # Tenta ler no formato 12h (AM/PM) se falhar no 24h
-                if 'AM' in apt['time'] or 'PM' in apt['time']:
-                    time_obj = datetime.strptime(apt['time'], "%I:%M %p")
+                apt_time = apt['time']
+                if 'AM' in apt_time or 'PM' in apt_time:
+                    time_obj = datetime.strptime(apt_time, "%I:%M %p")
                 else:
-                    time_obj = datetime.strptime(apt['time'], "%H:%M")
+                    time_obj = datetime.strptime(apt_time, "%H:%M")
                 
-                apt_hour, apt_minute = time_obj.hour, time_obj.minute
-                apt_minutes = apt_hour * 60 + apt_minute
-                apt_end_minutes = apt_minutes + apt['duration_minutes']
+                apt_start = time_obj.hour * 60 + time_obj.minute
+                apt_end = apt_start + apt['duration_minutes']
                 
-                if not (slot_end_minutes <= apt_minutes or slot_minutes >= apt_end_minutes):
+                if not (slot_end_minutes <= apt_start or slot_minutes >= apt_end):
                     is_available = False
                     break
-            except Exception as e:
-                print(f"Erro ao processar horário do agendamento: {e}")
+            except:
                 continue
-            
-            # Check for overlap
-            if not (slot_end_minutes <= apt_minutes or slot_minutes >= apt_end_minutes):
-                is_available = False
-                break
         
-        # Check against blocked slots
+        # Verifica contra bloqueios
         if is_available:
             for blocked in blocked_slots:
-                blocked_start_hour, blocked_start_minute = map(int, blocked['start_time'].split(':'))
-                blocked_end_hour, blocked_end_minute = map(int, blocked['end_time'].split(':'))
-                blocked_start_minutes = blocked_start_hour * 60 + blocked_start_minute
-                blocked_end_minutes = blocked_end_hour * 60 + blocked_end_minute
-                
-                # Check for overlap
-                if not (slot_end_minutes <= blocked_start_minutes or slot_minutes >= blocked_end_minutes):
-                    is_available = False
-                    break
+                try:
+                    b_start_h, b_start_m = map(int, blocked['start_time'].split(':'))
+                    b_end_h, b_end_m = map(int, blocked['end_time'].split(':'))
+                    b_start = b_start_h * 60 + b_start_m
+                    b_end = b_end_h * 60 + b_end_m
+                    
+                    if not (slot_end_minutes <= b_start or slot_minutes >= b_end):
+                        is_available = False
+                        break
+                except:
+                    continue
         
         if is_available:
             available_slots_24h.append(slot_24h)
     
-    # NOVO PASSO: Formatar os slots disponíveis para AM/PM
-    available_slots_12h = []
-    for slot_24h in available_slots_24h:
-        # Cria um objeto hora a partir da string 24h. Usamos uma data base arbitrária.
-        time_obj = datetime.strptime(slot_24h, "%H:%M")
-        # Formata para o padrão 12 horas (Ex: 09:00 AM, 08:30 PM)
-        available_slots_12h.append(time_obj.strftime("%I:%M %p"))
+    # Formata para AM/PM para o site
+    available_slots_12h = [
+        datetime.strptime(s, "%H:%M").strftime("%I:%M %p") 
+        for s in available_slots_24h
+    ]
     
     return {"available_slots": available_slots_12h}
 
@@ -608,26 +594,24 @@ async def initialize_services():
         await db.services.insert_many(services)
         logger.info("Services initialized")
 
-@app.put("/appointments/{appointment_id}")
-def update_appointment_details(appointment_id: str, data: dict):
-    # Esta rota permite mudar qualquer coisa: status, hora, data
-    # Se data['status'] for 'cancelled', o horário é liberado
-    appointment_ref = db.collection('appointments').document(appointment_id)
-    appointment_ref.update(data)
+# ========== NOVAS ROTAS DE GESTAO (CORRIGIDAS) ==========
+
+@api_router.put("/appointments/{appointment_id}")
+async def update_appointment_details(appointment_id: str, data: dict):
+    await db.appointments.update_one({"id": appointment_id}, {"$set": data})
     return {"status": "success"}
 
-@app.delete("/appointments/{appointment_id}")
-def delete_appointment(appointment_id: str):
-    db.collection('appointments').document(appointment_id).delete()
+@api_router.delete("/appointments/{appointment_id}")
+async def delete_appointment(appointment_id: str):
+    await db.appointments.delete_one({"id": appointment_id})
     return {"status": "deleted"}
 
-@app.put("/customers/{customer_id}")
-def update_customer(customer_id: str, data: dict):
-    customer_ref = db.collection('customers').document(customer_id)
-    customer_ref.update(data)
+@api_router.put("/customers/{customer_id}")
+async def update_customer(customer_id: str, data: dict):
+    await db.customers.update_one({"id": customer_id}, {"$set": data})
     return {"status": "updated"}
 
-@app.delete("/customers/{customer_id}")
-def delete_customer(customer_id: str):
-    db.collection('customers').document(customer_id).delete()
+@api_router.delete("/customers/{customer_id}")
+async def delete_customer(customer_id: str):
+    await db.customers.delete_one({"id": customer_id})
     return {"status": "deleted"}
