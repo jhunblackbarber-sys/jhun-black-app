@@ -385,9 +385,23 @@ async def get_available_slots(date: str, service_id: str):
         
         # Check against appointments
         for apt in appointments:
-            apt_hour, apt_minute = map(int, apt['time'].split(':'))
-            apt_minutes = apt_hour * 60 + apt_minute
-            apt_end_minutes = apt_minutes + apt['duration_minutes']
+            try:
+                # Tenta ler no formato 12h (AM/PM) se falhar no 24h
+                if 'AM' in apt['time'] or 'PM' in apt['time']:
+                    time_obj = datetime.strptime(apt['time'], "%I:%M %p")
+                else:
+                    time_obj = datetime.strptime(apt['time'], "%H:%M")
+                
+                apt_hour, apt_minute = time_obj.hour, time_obj.minute
+                apt_minutes = apt_hour * 60 + apt_minute
+                apt_end_minutes = apt_minutes + apt['duration_minutes']
+                
+                if not (slot_end_minutes <= apt_minutes or slot_minutes >= apt_end_minutes):
+                    is_available = False
+                    break
+            except Exception as e:
+                print(f"Erro ao processar horário do agendamento: {e}")
+                continue
             
             # Check for overlap
             if not (slot_end_minutes <= apt_minutes or slot_minutes >= apt_end_minutes):
