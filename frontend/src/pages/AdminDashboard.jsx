@@ -37,6 +37,7 @@ export default function AdminDashboard() {
   });
   const [appointments, setAppointments] = useState([]);
   const [customers, setCustomers] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
 
   // Block slot form
   const [blockSlotData, setBlockSlotData] = useState({
@@ -194,6 +195,37 @@ const handleUpdateCustomer = async (e) => {
     toast.error('Erro ao atualizar dados do cliente');
   }
 };
+
+  const handleDeleteCustomer = async (id) => {
+  if (window.confirm("Tem certeza que deseja excluir este cliente? Isso não removerá o histórico, mas o cliente não aparecerá mais na lista.")) {
+    try {
+      await axios.delete(`${API}/customers/${id}`);
+      toast.success('Cliente removido com sucesso');
+      fetchDashboardData(); // Recarrega a lista
+    } catch (error) {
+      console.error('Erro ao deletar cliente:', error);
+      toast.error('Erro ao remover cliente');
+    }
+  }
+};
+
+const handleDeleteAppointment = async (id) => {
+  if (window.confirm("Deseja excluir este agendamento permanentemente?")) {
+    try {
+      await axios.delete(`${API}/appointments/${id}`);
+      toast.success('Agendamento excluído');
+      fetchDashboardData();
+    } catch (error) {
+      console.error('Erro ao deletar agendamento:', error);
+      toast.error('Erro ao excluir agendamento');
+    }
+  }
+};
+
+  const filteredCustomers = customers.filter(customer => 
+  customer.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+  customer.phone.includes(searchTerm)
+);
   
   return (
     <div className="min-h-screen bg-black">
@@ -310,6 +342,29 @@ const handleUpdateCustomer = async (e) => {
                   }
                 </h3>
                 
+                {/* Appointments Tab */}
+          <TabsContent value="appointments">
+            <Card className="bg-black/60 border-white/20 p-6">
+              <div className="mb-6">
+                <h2 className="text-white text-xl font-bold mb-4">Filter by Date</h2>
+                <Calendar
+                  mode="multiple"
+                  selected={selectedDates}
+                  onSelect={setSelectedDates}
+                  className="rounded-md border border-white/20 bg-black/40 text-white"
+                  data-testid="admin-calendar"
+                />
+              </div>
+
+              <div className="space-y-4">
+                <h3 className="text-white text-lg font-bold">
+                  Appointments for {
+                    selectedDates && selectedDates.length > 0 
+                      ? format(selectedDates[0], 'MMMM dd, yyyy') 
+                      : format(new Date(), 'MMMM dd, yyyy')
+                  }
+                </h3>
+                
                 {appointments.length === 0 ? (
                   <p className="text-white/50 text-center py-8">No appointments for this date</p>
                 ) : (
@@ -329,37 +384,48 @@ const handleUpdateCustomer = async (e) => {
                             <p className="text-white/50 text-sm">{apt.service_name} • {apt.duration_minutes} min</p>
                           </div>
 
-                          {apt.status === 'scheduled' && (
-                            <div className="flex gap-2">
+                          <div className="flex gap-2 flex-wrap md:flex-nowrap">
+                            {/* Ações para Agendamentos Ativos */}
+                            {apt.status === 'scheduled' && (
+                              <>
+                                <Button
+                                  size="sm"
+                                  onClick={() => handleStatusUpdate(apt.id, 'completed')}
+                                  className="bg-[#00df9a] hover:bg-[#00bf83] text-black gap-2"
+                                >
+                                  <CheckCircle className="w-4 h-4" /> Complete
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  onClick={() => handleStatusUpdate(apt.id, 'no-show')}
+                                  variant="outline"
+                                  className="border-red-500 text-red-500 hover:bg-red-500 hover:text-white gap-2"
+                                >
+                                  <XCircle className="w-4 h-4" /> No-show
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  onClick={() => handleCancel(apt.id)}
+                                  variant="ghost"
+                                  className="text-gray-400 hover:text-white hover:bg-white/10 gap-2"
+                                >
+                                  <Ban className="w-4 h-4" /> Cancel
+                                </Button>
+                              </>
+                            )}
+
+                            {/* Ação de Excluir para Limpeza */}
+                            {(apt.status === 'completed' || apt.status === 'cancelled' || apt.status === 'no-show') && (
                               <Button
                                 size="sm"
-                                onClick={() => handleComplete(apt.id)}
-                                className="bg-[#00df9a] hover:bg-[#00bf83] text-black gap-2"
-                              >
-                                <CheckCircle className="w-4 h-4" />
-                                Complete
-                              </Button>
-                              <Button
-                                size="sm"
-                                onClick={() => handleNoShow(apt.id)}
-                                variant="outline"
-                                className="border-red-500 text-red-500 hover:bg-red-500 hover:text-white gap-2"
-                              >
-                                <XCircle className="w-4 h-4" />
-                                No-show
-                              </Button>
-                              {/* NOVO BOTÃO DE CANCELAR ABAIXO */}
-                              <Button
-                                size="sm"
-                                onClick={() => handleCancel(apt.id)}
                                 variant="ghost"
-                                className="text-gray-400 hover:text-white hover:bg-white/10 gap-2"
+                                onClick={() => handleDeleteAppointment(apt.id)}
+                                className="text-red-500/50 hover:text-red-500 hover:bg-red-500/10 gap-2"
                               >
-                                <Ban className="w-4 h-4" />
-                                Cancel
+                                <Trash2 className="w-4 h-4" /> Eliminar Registo
                               </Button>
-                            </div>
-                          )}
+                            )}
+                          </div>
                         </div>
                       </Card>
                     ))}
@@ -372,44 +438,75 @@ const handleUpdateCustomer = async (e) => {
           {/* Customers Tab */}
           <TabsContent value="customers">
             <Card className="bg-black/60 border-white/20 p-6">
-              <h2 className="text-white text-xl font-bold mb-6">Customer History</h2>
-              
-              {customers.length === 0 ? (
-                <p className="text-white/50 text-center py-8">No customers yet</p>
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+                <div>
+                  <h2 className="text-white text-xl font-bold">Customer History</h2>
+                  <p className="text-white/50 text-sm">Manage your client database</p>
+                </div>
+                
+                <div className="relative w-full md:w-72">
+                  <Input
+                    placeholder="Search name or phone..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="bg-white/5 border-white/10 text-white pl-10"
+                  />
+                  <Users className="w-4 h-4 text-white/40 absolute left-3 top-1/2 -translate-y-1/2" />
+                </div>
+              </div>
+
+              {filteredCustomers.length === 0 ? (
+                <div className="text-center py-12 border-2 border-dashed border-white/5 rounded-xl">
+                  <p className="text-white/50"> No customers found with "{searchTerm}"</p>
+                </div>
               ) : (
-                <div className="space-y-3">
-                  {customers.map((customer) => (
-                    <Card key={customer.id} className="bg-black border-white/10 p-4">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h4 className="text-white font-bold">{customer.full_name}</h4>
-                          <p className="text-white/70 text-sm">{customer.phone}</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {filteredCustomers.map((customer) => (
+                    <Card key={customer.id} className="bg-black border-white/10 p-4 hover:border-[#FFD700]/30 transition-colors">
+                      <div className="flex items-start justify-between">
+                        <div className="space-y-1">
+                          <h4 className="text-white font-bold text-lg">{customer.full_name}</h4>
+                          <p className="text-white/70 text-sm flex items-center gap-2">
+                            <span className="text-[#FFD700]">📞</span> {customer.phone}
+                          </p>
                           {customer.email && (
-                            <p className="text-white/50 text-sm">{customer.email}</p>
+                            <p className="text-white/50 text-xs">{customer.email}</p>
                           )}
                         </div>
                         <div className="text-right">
                           <p className="text-[#FFD700] font-bold">{customer.total_appointments} visits</p>
                           {customer.last_visit && (
-                            <p className="text-white/50 text-sm">Last: {customer.last_visit}</p>
+                            <p className="text-white/40 text-[10px] uppercase tracking-wider mt-1">
+                              Last: {customer.last_visit}
+                            </p>
                           )}
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => {
-                              setEditingCustomer(customer);
-                              setEditFormData({
-                                full_name: customer.full_name,
-                                phone: customer.phone,
-                                email: customer.email || ''
-                              });
-                            }}
-                            className="text-[#FFD700] hover:bg-[#FFD700]/10 mt-2 gap-2"
-                            >
-                            <Plus className="w-4 h-4" />
-                            Edit
-                          </Button>
                         </div>
+                      </div>
+                      
+                      <div className="flex gap-2 justify-end mt-4 pt-4 border-t border-white/5">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => {
+                            setEditingCustomer(customer);
+                            setEditFormData({
+                              full_name: customer.full_name,
+                              phone: customer.phone,
+                              email: customer.email || ''
+                            });
+                          }}
+                          className="text-[#FFD700] hover:bg-[#FFD700]/10 gap-2"
+                        >
+                          <Plus className="w-4 h-4" /> Edit
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleDeleteCustomer(customer.id)}
+                          className="text-red-500 hover:bg-red-500/10 gap-2"
+                        >
+                          <Trash2 className="w-4 h-4" /> Excluir
+                        </Button>
                       </div>
                     </Card>
                   ))}
