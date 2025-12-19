@@ -38,36 +38,32 @@ export default function AdminDashboard() {
   const [appointments, setAppointments] = useState([]);
   const [customers, setCustomers] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
-
-  // Block slot form
-  const [blockSlotData, setBlockSlotData] = useState({
-    start_date: format(new Date(), 'yyyy-MM-dd'), // Data de início
-    end_date: format(new Date(), 'yyyy-MM-dd'),   // Data de fim
-    start_time: '09:00',
-    end_time: '12:00',
-    reason: ''
-  });
-  const [selectedDates, setSelectedDates] = useState([]);
+  const [selectedDates, setSelectedDates] = useState([new Date()]);
   const [loading, setLoading] = useState(false);
   const [blockedSlots, setBlockedSlots] = useState([]);
-  
-  
+
+  const [blockSlotData, setBlockSlotData] = useState({
+    start_date: format(new Date(), 'yyyy-MM-dd'),
+    end_date: format(new Date(), 'yyyy-MM-dd'),
+    start_time: '09:00',
+    end_time: '12:00',
+    reason: ''
+  });
+
   useEffect(() => {
     const token = localStorage.getItem('admin_token');
     if (!token) {
       navigate('/admin/login');
       return;
     }
-    
     fetchDashboardData();
   }, []);
 
   useEffect(() => {
-    // Agora checa se selectedDates existe E tem pelo menos uma data
-    if (selectedDates && selectedDates.length > 0) { 
-      fetchAppointmentsByDate(selectedDates[0]); // Pega apenas a primeira data para a busca de compromissos
-    }
-  }, [selectedDates]); // Usa o novo nome do estado
+    if (selectedDates && selectedDates.length > 0) {
+      fetchAppointmentsByDate(selectedDates[0]);
+    }
+  }, [selectedDates]);
 
   const fetchDashboardData = async () => {
     try {
@@ -77,62 +73,48 @@ export default function AdminDashboard() {
         axios.get(`${API}/customers`),
         axios.get(`${API}/blocked-slots`)
       ]);
-
       setStats(statsRes.data);
       setAppointments(appointmentsRes.data);
       setCustomers(customersRes.data);
       setBlockedSlots(blockedRes.data);
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
-      toast.error('Failed to load dashboard data');
+      toast.error('Erro ao carregar dados do painel');
     }
   };
 
- // A função agora aceita a data que deve ser buscada como argumento
-  const fetchAppointmentsByDate = async (dateToFetch) => { 
-    try {
-      // Usa o argumento passado (que será a primeira data selecionada)
-      const dateStr = format(dateToFetch, 'yyyy-MM-dd'); 
-      const response = await axios.get(`${API}/appointments`, {
-        params: { date: dateStr }
-      });
-      setAppointments(response.data);
-    } catch (error) {
-      console.error('Error fetching appointments:', error);
-    }
-  };
+  const fetchAppointmentsByDate = async (dateToFetch) => {
+    try {
+      const dateStr = format(dateToFetch, 'yyyy-MM-dd');
+      const response = await axios.get(`${API}/appointments`, {
+        params: { date: dateStr }
+      });
+      setAppointments(response.data);
+    } catch (error) {
+      console.error('Error fetching appointments:', error);
+    }
+  };
 
   const handleStatusUpdate = async (appointmentId, newStatus) => {
     try {
-      await axios.patch(`${API}/appointments/${appointmentId}`, {
-        status: newStatus
-      });
-      toast.success('Appointment status updated');
-      fetchAppointmentsByDate();
+      await axios.patch(`${API}/appointments/${appointmentId}`, { status: newStatus });
+      toast.success('Estado atualizado');
       fetchDashboardData();
+      if (selectedDates[0]) fetchAppointmentsByDate(selectedDates[0]);
     } catch (error) {
-      console.error('Error updating appointment:', error);
-      toast.error('Failed to update appointment');
+      toast.error('Erro ao atualizar agendamento');
     }
   };
 
   const handleBlockSlot = async (e) => {
     e.preventDefault();
     setLoading(true);
-    
     try {
       await axios.post(`${API}/blocked-slots`, blockSlotData);
-      toast.success('Time slot blocked successfully');
-      setBlockSlotData({
-        date: format(new Date(), 'yyyy-MM-dd'),
-        start_time: '09:00',
-        end_time: '12:00',
-        reason: ''
-      });
+      toast.success('Horário bloqueado com sucesso');
       fetchDashboardData();
     } catch (error) {
-      console.error('Error blocking slot:', error);
-      toast.error('Failed to block time slot');
+      toast.error('Erro ao bloquear horário');
     } finally {
       setLoading(false);
     }
@@ -141,11 +123,58 @@ export default function AdminDashboard() {
   const handleUnblockSlot = async (slotId) => {
     try {
       await axios.delete(`${API}/blocked-slots/${slotId}`);
-      toast.success('Time slot unblocked');
+      toast.success('Horário desbloqueado');
       fetchDashboardData();
     } catch (error) {
-      console.error('Error unblocking slot:', error);
-      toast.error('Failed to unblock time slot');
+      toast.error('Erro ao desbloquear');
+    }
+  };
+
+  const handleCancel = async (id) => {
+    try {
+      await axios.patch(`${API}/appointments/${id}`, { status: 'cancelled' });
+      toast.success('Agendamento cancelado');
+      fetchDashboardData();
+      if (selectedDates[0]) fetchAppointmentsByDate(selectedDates[0]);
+    } catch (error) {
+      toast.error('Erro ao cancelar');
+    }
+  };
+
+  const handleUpdateCustomer = async (e) => {
+    e.preventDefault();
+    try {
+      await axios.put(`${API}/customers/${editingCustomer.id}`, editFormData);
+      toast.success('Cliente atualizado com sucesso');
+      setEditingCustomer(null);
+      fetchDashboardData();
+    } catch (error) {
+      toast.error('Erro ao atualizar dados do cliente');
+    }
+  };
+
+  const handleDeleteCustomer = async (id) => {
+    if (window.confirm("Deseja mesmo eliminar este cliente?")) {
+      try {
+        await axios.delete(`${API}/customers/${id}`);
+        toast.success('Cliente removido');
+        fetchDashboardData();
+      } catch (error) {
+        toast.error('Erro ao remover cliente');
+      }
+    }
+  };
+
+  const handleDeleteAppointment = async (id) => {
+    if (window.confirm("Deseja excluir este registo permanentemente?")) {
+      try {
+        await axios.delete(`${API}/appointments/${id}`);
+        toast.success('Registo eliminado');
+        fetchDashboardData();
+        if (selectedDates[0]) fetchAppointmentsByDate(selectedDates[0]);
+      } catch (error) {
+        toast.error('Erro ao eliminar');
+      }
     }
   };
 
@@ -156,94 +185,30 @@ export default function AdminDashboard() {
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'scheduled':
-        return 'text-blue-400';
-      case 'completed':
-        return 'text-green-400';
-      case 'no-show':
-        return 'text-red-400';
-      case 'cancelled':
-        return 'text-gray-400';
-      default:
-        return 'text-white';
+      case 'scheduled': return 'text-blue-400';
+      case 'completed': return 'text-green-400';
+      case 'no-show': return 'text-red-400';
+      case 'cancelled': return 'text-gray-400';
+      default: return 'text-white';
     }
   };
-  
-const handleCancel = async (id) => {
-  try {
-    // Usamos patch para manter a consistência com o que já tinhas
-    await axios.patch(`${API}/appointments/${id}`, { status: 'cancelled' });
-    toast.success('Agendamento cancelado e horário libertado');
-    // Nomes corrigidos para as funções que existem no seu ficheiro:
-    fetchDashboardData(); 
-  } catch (error) {
-    console.error('Error cancelling appointment:', error);
-    toast.error('Erro ao cancelar agendamento');
-  }
-};
-
-const handleUpdateCustomer = async (e) => {
-  e.preventDefault();
-  try {
-    await axios.put(`${API}/customers/${editingCustomer.id}`, editFormData);
-    toast.success('Cliente atualizado com sucesso!');
-    setEditingCustomer(null);
-    // Nome corrigido para a função que carrega os dados:
-    fetchDashboardData(); 
-  } catch (error) {
-    console.error('Erro ao atualizar cliente:', error);
-    toast.error('Erro ao atualizar dados do cliente');
-  }
-};
-
-  const handleDeleteCustomer = async (id) => {
-  if (window.confirm("Tem certeza que deseja excluir este cliente? Isso não removerá o histórico, mas o cliente não aparecerá mais na lista.")) {
-    try {
-      await axios.delete(`${API}/customers/${id}`);
-      toast.success('Cliente removido com sucesso');
-      fetchDashboardData(); // Recarrega a lista
-    } catch (error) {
-      console.error('Erro ao deletar cliente:', error);
-      toast.error('Erro ao remover cliente');
-    }
-  }
-};
-
-const handleDeleteAppointment = async (id) => {
-  if (window.confirm("Deseja excluir este agendamento permanentemente?")) {
-    try {
-      await axios.delete(`${API}/appointments/${id}`);
-      toast.success('Agendamento excluído');
-      fetchDashboardData();
-    } catch (error) {
-      console.error('Erro ao deletar agendamento:', error);
-      toast.error('Erro ao excluir agendamento');
-    }
-  }
-};
 
   const filteredCustomers = customers.filter(customer => 
-  customer.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-  customer.phone.includes(searchTerm)
-);
-  
+    customer.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    customer.phone.includes(searchTerm)
+  );
+
   return (
     <div className="min-h-screen bg-black">
       {/* Header */}
-      <div className="admin-sidebar border-b border-[#FFD700]/30">
+      <div className="border-b border-[#FFD700]/30">
         <div className="max-w-7xl mx-auto px-4 py-6 flex items-center justify-between">
           <div>
             <h1 className="text-[#FFD700] text-3xl font-bold">JHUN BLACK BARBER</h1>
-            <p className="text-white/50 text-sm">Admin Dashboard</p>
+            <p className="text-white/50 text-sm">Painel de Administração</p>
           </div>
-          <Button
-            data-testid="logout-btn"
-            onClick={handleLogout}
-            variant="outline"
-            className="border-[#FFD700] text-[#FFD700] hover:bg-[#FFD700] hover:text-black"
-          >
-            <LogOut className="w-4 h-4 mr-2" />
-            Logout
+          <Button onClick={handleLogout} variant="outline" className="border-[#FFD700] text-[#FFD700] hover:bg-[#FFD700] hover:text-black">
+            <LogOut className="w-4 h-4 mr-2" /> Sair
           </Button>
         </div>
       </div>
@@ -251,428 +216,206 @@ const handleDeleteAppointment = async (id) => {
       <div className="max-w-7xl mx-auto px-4 py-8">
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <Card className="stat-card p-6">
+          <Card className="bg-black/40 border border-white/10 p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-white/50 text-sm">Today's Appointments</p>
+                <p className="text-white/50 text-sm">Hoje</p>
                 <h3 className="text-[#FFD700] text-3xl font-bold mt-2">{stats.today_appointments}</h3>
               </div>
-              <CalendarIcon className="w-10 h-10 text-[#FFD700]" />
+              <CalendarIcon className="w-10 h-10 text-[#FFD700]/20" />
             </div>
           </Card>
-          
-          <Card className="stat-card p-6">
+          <Card className="bg-black/40 border border-white/10 p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-white/50 text-sm">Total Customers</p>
+                <p className="text-white/50 text-sm">Clientes</p>
                 <h3 className="text-[#FFD700] text-3xl font-bold mt-2">{stats.total_customers}</h3>
               </div>
-              <Users className="w-10 h-10 text-[#FFD700]" />
+              <Users className="w-10 h-10 text-[#FFD700]/20" />
             </div>
           </Card>
-          
-          <Card className="stat-card p-6">
+          <Card className="bg-black/40 border border-white/10 p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-white/50 text-sm">Monthly Revenue</p>
-                <h3 className="text-[#FFD700] text-3xl font-bold mt-2">${stats.monthly_revenue}</h3>
+                <p className="text-white/50 text-sm">Faturação Mês</p>
+                <h3 className="text-[#FFD700] text-3xl font-bold mt-2">€{stats.monthly_revenue}</h3>
               </div>
-              <DollarSign className="w-10 h-10 text-[#FFD700]" />
+              <DollarSign className="w-10 h-10 text-[#FFD700]/20" />
             </div>
           </Card>
-          
-          <Card className="stat-card p-6">
+          <Card className="bg-black/40 border border-white/10 p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-white/50 text-sm">This Month</p>
+                <p className="text-white/50 text-sm">Total Mês</p>
                 <h3 className="text-[#FFD700] text-3xl font-bold mt-2">{stats.total_appointments}</h3>
               </div>
-              <Clock className="w-10 h-10 text-[#FFD700]" />
+              <Clock className="w-10 h-10 text-[#FFD700]/20" />
             </div>
           </Card>
         </div>
 
-        {/* Tabs */}
         <Tabs defaultValue="appointments" className="space-y-6">
           <TabsList className="bg-black border border-[#FFD700]/30">
-            <TabsTrigger 
-              data-testid="appointments-tab"
-              value="appointments" 
-              className="data-[state=active]:bg-[#FFD700] data-[state=active]:text-black text-white"
-            >
-              Appointments
-            </TabsTrigger>
-            <TabsTrigger 
-              data-testid="customers-tab"
-              value="customers"
-              className="data-[state=active]:bg-[#FFD700] data-[state=active]:text-black text-white"
-            >
-              Customers
-            </TabsTrigger>
-            <TabsTrigger 
-              data-testid="block-slots-tab"
-              value="block-slots"
-              className="data-[state=active]:bg-[#FFD700] data-[state=active]:text-black text-white"
-            >
-              Block Time Slots
-            </TabsTrigger>
+            <TabsTrigger value="appointments" className="text-white data-[state=active]:bg-[#FFD700] data-[state=active]:text-black">Agendamentos</TabsTrigger>
+            <TabsTrigger value="customers" className="text-white data-[state=active]:bg-[#FFD700] data-[state=active]:text-black">Clientes</TabsTrigger>
+            <TabsTrigger value="block-slots" className="text-white data-[state=active]:bg-[#FFD700] data-[state=active]:text-black">Bloqueios</TabsTrigger>
           </TabsList>
 
-          {/* Appointments Tab */}
           <TabsContent value="appointments">
             <Card className="bg-black/60 border-white/20 p-6">
-              <div className="mb-6">
-                <h2 className="text-white text-xl font-bold mb-4">Filter by Date</h2>
-                <Calendar
-                  mode="multiple" // Mantém a seleção de múltiplos dias
-                  selected={selectedDates} // Usa o novo estado
-                  onSelect={setSelectedDates} // Usa o novo setter
-                  className="rounded-md border border-white/20 bg-black/40 text-white"
-                  data-testid="admin-calendar"
-                />
-              </div>
-
-              <div className="space-y-4">
-               <h3 className="text-white text-lg font-bold">
-                  {/* Mostra a primeira data selecionada ou 'Today' se nada for selecionado */}
-                  Appointments for {
-                    selectedDates && selectedDates.length > 0 
-                      ? format(selectedDates[0], 'MMMM dd, yyyy') 
-                      : format(new Date(), 'MMMM dd, yyyy') // Fallback para data de hoje
-                  }
-                </h3>
-                
-                {/* Appointments Tab */}
-          <TabsContent value="appointments">
-            <Card className="bg-black/60 border-white/20 p-6">
-              <div className="mb-6">
-                <h2 className="text-white text-xl font-bold mb-4">Filter by Date</h2>
-                <Calendar
-                  mode="multiple"
-                  selected={selectedDates}
-                  onSelect={setSelectedDates}
-                  className="rounded-md border border-white/20 bg-black/40 text-white"
-                  data-testid="admin-calendar"
-                />
-              </div>
-
-              <div className="space-y-4">
-                <h3 className="text-white text-lg font-bold">
-                  Appointments for {
-                    selectedDates && selectedDates.length > 0 
-                      ? format(selectedDates[0], 'MMMM dd, yyyy') 
-                      : format(new Date(), 'MMMM dd, yyyy')
-                  }
-                </h3>
-                
-                {appointments.length === 0 ? (
-                  <p className="text-white/50 text-center py-8">No appointments for this date</p>
-                ) : (
-                  <div className="space-y-3">
-                    {appointments.map((apt) => (
+              <div className="grid md:grid-cols-2 gap-8">
+                <div>
+                  <h2 className="text-white text-xl font-bold mb-4">Filtrar por Data</h2>
+                  <Calendar 
+                    mode="single" 
+                    selected={selectedDates[0]} 
+                    onSelect={(d) => setSelectedDates([d])} 
+                    className="rounded-md border border-white/10 bg-black/40 text-white" 
+                  />
+                </div>
+                <div className="space-y-4">
+                  <h3 className="text-white text-lg font-bold border-b border-white/10 pb-2">
+                    Agendamentos de {format(selectedDates[0] || new Date(), 'dd/MM/yyyy')}
+                  </h3>
+                  {appointments.length === 0 ? (
+                    <p className="text-white/50 py-8 text-center">Nenhum agendamento para este dia.</p>
+                  ) : (
+                    appointments.map((apt) => (
                       <Card key={apt.id} className="bg-black border-white/10 p-4">
-                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-3 mb-2">
-                              <span className="text-[#FFD700] font-bold text-lg">{apt.time}</span>
-                              <span className={`font-bold capitalize ${getStatusColor(apt.status)}`}>
-                                {apt.status}
-                              </span>
+                        <div className="flex flex-col gap-3">
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <span className="text-[#FFD700] font-bold text-lg mr-3">{apt.time}</span>
+                              <span className={`text-xs uppercase font-bold ${getStatusColor(apt.status)}`}>{apt.status}</span>
+                              <h4 className="text-white font-bold mt-1">{apt.customer_name}</h4>
+                              <p className="text-white/50 text-sm">{apt.service_name} • {apt.duration_minutes}min</p>
                             </div>
-                            <h4 className="text-white font-bold">{apt.customer_name}</h4>
-                            <p className="text-white/70 text-sm">{apt.customer_phone}</p>
-                            <p className="text-white/50 text-sm">{apt.service_name} • {apt.duration_minutes} min</p>
                           </div>
-
-                          <div className="flex gap-2 flex-wrap md:flex-nowrap">
-                            {/* Ações para Agendamentos Ativos */}
+                          <div className="flex gap-2 border-t border-white/5 pt-3">
                             {apt.status === 'scheduled' && (
                               <>
-                                <Button
-                                  size="sm"
-                                  onClick={() => handleStatusUpdate(apt.id, 'completed')}
-                                  className="bg-[#00df9a] hover:bg-[#00bf83] text-black gap-2"
-                                >
-                                  <CheckCircle className="w-4 h-4" /> Complete
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  onClick={() => handleStatusUpdate(apt.id, 'no-show')}
-                                  variant="outline"
-                                  className="border-red-500 text-red-500 hover:bg-red-500 hover:text-white gap-2"
-                                >
-                                  <XCircle className="w-4 h-4" /> No-show
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  onClick={() => handleCancel(apt.id)}
-                                  variant="ghost"
-                                  className="text-gray-400 hover:text-white hover:bg-white/10 gap-2"
-                                >
-                                  <Ban className="w-4 h-4" /> Cancel
-                                </Button>
+                                <Button size="sm" onClick={() => handleStatusUpdate(apt.id, 'completed')} className="bg-green-600 hover:bg-green-700 text-white flex-1"><CheckCircle className="w-4 h-4 mr-1" /> Concluir</Button>
+                                <Button size="sm" onClick={() => handleCancel(apt.id)} variant="outline" className="border-red-500 text-red-500 flex-1"><Ban className="w-4 h-4 mr-1" /> Cancelar</Button>
                               </>
                             )}
-
-                            {/* Ação de Excluir para Limpeza */}
-                            {(apt.status === 'completed' || apt.status === 'cancelled' || apt.status === 'no-show') && (
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={() => handleDeleteAppointment(apt.id)}
-                                className="text-red-500/50 hover:text-red-500 hover:bg-red-500/10 gap-2"
-                              >
-                                <Trash2 className="w-4 h-4" /> Eliminar Registo
-                              </Button>
-                            )}
+                            <Button size="sm" variant="ghost" onClick={() => handleDeleteAppointment(apt.id)} className="text-white/30 hover:text-red-500"><Trash2 className="w-4 h-4" /></Button>
                           </div>
                         </div>
                       </Card>
-                    ))}
-                  </div>
-                )}
+                    ))
+                  )}
+                </div>
               </div>
             </Card>
           </TabsContent>
 
-          {/* Customers Tab */}
           <TabsContent value="customers">
             <Card className="bg-black/60 border-white/20 p-6">
               <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-                <div>
-                  <h2 className="text-white text-xl font-bold">Customer History</h2>
-                  <p className="text-white/50 text-sm">Manage your client database</p>
-                </div>
-                
+                <h2 className="text-white text-xl font-bold">Histórico de Clientes</h2>
                 <div className="relative w-full md:w-72">
-                  <Input
-                    placeholder="Search name or phone..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="bg-white/5 border-white/10 text-white pl-10"
-                  />
+                  <Input placeholder="Procurar nome ou telefone..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="bg-white/5 border-white/10 text-white pl-10" />
                   <Users className="w-4 h-4 text-white/40 absolute left-3 top-1/2 -translate-y-1/2" />
                 </div>
               </div>
-
-              {filteredCustomers.length === 0 ? (
-                <div className="text-center py-12 border-2 border-dashed border-white/5 rounded-xl">
-                  <p className="text-white/50"> No customers found with "{searchTerm}"</p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {filteredCustomers.map((customer) => (
-                    <Card key={customer.id} className="bg-black border-white/10 p-4 hover:border-[#FFD700]/30 transition-colors">
-                      <div className="flex items-start justify-between">
-                        <div className="space-y-1">
-                          <h4 className="text-white font-bold text-lg">{customer.full_name}</h4>
-                          <p className="text-white/70 text-sm flex items-center gap-2">
-                            <span className="text-[#FFD700]">📞</span> {customer.phone}
-                          </p>
-                          {customer.email && (
-                            <p className="text-white/50 text-xs">{customer.email}</p>
-                          )}
-                        </div>
-                        <div className="text-right">
-                          <p className="text-[#FFD700] font-bold">{customer.total_appointments} visits</p>
-                          {customer.last_visit && (
-                            <p className="text-white/40 text-[10px] uppercase tracking-wider mt-1">
-                              Last: {customer.last_visit}
-                            </p>
-                          )}
-                        </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {filteredCustomers.map((customer) => (
+                  <Card key={customer.id} className="bg-black border-white/10 p-4 hover:border-[#FFD700]/30 transition-colors">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h4 className="text-white font-bold">{customer.full_name}</h4>
+                        <p className="text-[#FFD700] text-sm">{customer.phone}</p>
+                        <p className="text-white/40 text-xs mt-1">{customer.total_appointments} visitas</p>
                       </div>
-                      
-                      <div className="flex gap-2 justify-end mt-4 pt-4 border-t border-white/5">
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => {
-                            setEditingCustomer(customer);
-                            setEditFormData({
-                              full_name: customer.full_name,
-                              phone: customer.phone,
-                              email: customer.email || ''
-                            });
-                          }}
-                          className="text-[#FFD700] hover:bg-[#FFD700]/10 gap-2"
-                        >
-                          <Plus className="w-4 h-4" /> Edit
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => handleDeleteCustomer(customer.id)}
-                          className="text-red-500 hover:bg-red-500/10 gap-2"
-                        >
-                          <Trash2 className="w-4 h-4" /> Excluir
-                        </Button>
+                      <div className="flex gap-1">
+                        <Button size="sm" variant="ghost" onClick={() => { setEditingCustomer(customer); setEditFormData({ full_name: customer.full_name, phone: customer.phone, email: customer.email || '' }); }} className="text-[#FFD700] hover:bg-[#FFD700]/10"><Plus className="w-4 h-4" /></Button>
+                        <Button size="sm" variant="ghost" onClick={() => handleDeleteCustomer(customer.id)} className="text-red-500 hover:bg-red-500/10"><Trash2 className="w-4 h-4" /></Button>
                       </div>
-                    </Card>
-                  ))}
-                </div>
-              )}
+                    </div>
+                  </Card>
+                ))}
+              </div>
             </Card>
           </TabsContent>
 
-          {/* Block Slots Tab */}
           <TabsContent value="block-slots">
             <div className="grid md:grid-cols-2 gap-6">
-              {/* Block New Slot */}
               <Card className="bg-black/60 border-white/20 p-6">
-                <h2 className="text-white text-xl font-bold mb-6 flex items-center">
-                  <Ban className="w-5 h-5 mr-2 text-[#FFD700]" />
-                  Block Time Slot
-                </h2>
-                
+                <h2 className="text-white text-xl font-bold mb-6 flex items-center"><Ban className="w-5 h-5 mr-2 text-[#FFD700]" /> Bloquear Horário</h2>
                 <form onSubmit={handleBlockSlot} className="space-y-4">
-                    
-                  <div className="grid grid-cols-2 gap-4"> 
-                  <div>
-                    <Label htmlFor="start-date" className="text-white">Start Date</Label>
-                    <Input
-                      id="start-date"
-                      type="date"
-                      value={blockSlotData.start_date}
-                      onChange={(e) => setBlockSlotData({...blockSlotData, start_date: e.target.value})}
-                      required
-                      className="bg-white/10 border-white/20 text-white mt-2"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="end-date" className="text-white">End Date</Label>
-                    <Input
-                      id="end-date"
-                      type="date"
-                      value={blockSlotData.end_date}
-                      onChange={(e) => setBlockSlotData({...blockSlotData, end_date: e.target.value})}
-                      required
-                      className="bg-white/10 border-white/20 text-white mt-2"
-                    />
-                  </div>
-                </div>
-                  
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <Label htmlFor="start-time" className="text-white">Start Time</Label>
-                      <Input
-                        id="start-time"
-                        data-testid="start-time-input"
-                        type="time"
-                        value={blockSlotData.start_time}
-                        onChange={(e) => setBlockSlotData({...blockSlotData, start_time: e.target.value})}
-                        required
-                        className="bg-white/10 border-white/20 text-white mt-2"
-                      />
+                      <Label className="text-white">Data Início</Label>
+                      <Input type="date" value={blockSlotData.start_date} onChange={e => setBlockSlotData({...blockSlotData, start_date: e.target.value})} className="bg-white/5 border-white/20 text-white" required />
                     </div>
                     <div>
-                      <Label htmlFor="end-time" className="text-white">End Time</Label>
-                      <Input
-                        id="end-time"
-                        data-testid="end-time-input"
-                        type="time"
-                        value={blockSlotData.end_time}
-                        onChange={(e) => setBlockSlotData({...blockSlotData, end_time: e.target.value})}
-                        required
-                        className="bg-white/10 border-white/20 text-white mt-2"
-                      />
+                      <Label className="text-white">Data Fim</Label>
+                      <Input type="date" value={blockSlotData.end_date} onChange={e => setBlockSlotData({...blockSlotData, end_date: e.target.value})} className="bg-white/5 border-white/20 text-white" required />
                     </div>
                   </div>
-                  
-                  <div>
-                    <Label htmlFor="reason" className="text-white">Reason (Optional)</Label>
-                    <Input
-                      id="reason"
-                      data-testid="block-reason-input"
-                      value={blockSlotData.reason}
-                      onChange={(e) => setBlockSlotData({...blockSlotData, reason: e.target.value})}
-                      placeholder="e.g., Family car appointment"
-                      className="bg-white/10 border-white/20 text-white mt-2"
-                    />
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label className="text-white">Hora Início</Label>
+                      <Input type="time" value={blockSlotData.start_time} onChange={e => setBlockSlotData({...blockSlotData, start_time: e.target.value})} className="bg-white/5 border-white/20 text-white" required />
+                    </div>
+                    <div>
+                      <Label className="text-white">Hora Fim</Label>
+                      <Input type="time" value={blockSlotData.end_time} onChange={e => setBlockSlotData({...blockSlotData, end_time: e.target.value})} className="bg-white/5 border-white/20 text-white" required />
+                    </div>
                   </div>
-                  
-                  <Button
-                    data-testid="block-slot-submit-btn"
-                    type="submit"
-                    disabled={loading}
-                    className="w-full bg-[#FFD700] hover:bg-[#FFC107] text-black font-bold"
-                  >
-                    <Plus className="w-4 h-4 mr-2" />
-                    {loading ? 'Blocking...' : 'Block Time Slot'}
+                  <Button type="submit" disabled={loading} className="w-full bg-[#FFD700] hover:bg-[#FFC107] text-black font-bold">
+                    {loading ? 'A bloquear...' : 'Confirmar Bloqueio'}
                   </Button>
                 </form>
               </Card>
 
-              {/* Blocked Slots List */}
               <Card className="bg-black/60 border-white/20 p-6">
-                <h2 className="text-white text-xl font-bold mb-6">Currently Blocked Slots</h2>
-                
-                {blockedSlots.length === 0 ? (
-                  <p className="text-white/50 text-center py-8">No blocked slots</p>
-                ) : (
-                  <div className="space-y-3 max-h-96 overflow-y-auto">
-                    {blockedSlots.map((slot) => (
-                      <Card key={slot.id} className="bg-black border-white/10 p-4">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="text-[#FFD700] font-bold">{slot.date}</p>
-                            <p className="text-white">{slot.start_time} - {slot.end_time}</p>
-                            {slot.reason && (
-                              <p className="text-white/50 text-sm mt-1">{slot.reason}</p>
-                            )}
-                          </div>
-                          <Button
-                            data-testid={`unblock-btn-${slot.id}`}
-                            size="sm"
-                            onClick={() => handleUnblockSlot(slot.id)}
-                            variant="outline"
-                            className="border-red-500 text-red-500 hover:bg-red-500 hover:text-white"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
+                <h2 className="text-white text-xl font-bold mb-4">Horários Bloqueados</h2>
+                <div className="space-y-3 max-h-80 overflow-y-auto pr-2">
+                  {blockedSlots.length === 0 ? (
+                    <p className="text-white/30 text-center py-10">Sem bloqueios ativos.</p>
+                  ) : (
+                    blockedSlots.map(slot => (
+                      <div key={slot.id} className="flex justify-between items-center bg-white/5 p-3 rounded-lg border border-white/5">
+                        <div>
+                          <p className="text-[#FFD700] text-sm font-bold">{slot.date}</p>
+                          <p className="text-white text-xs">{slot.start_time} - {slot.end_time}</p>
                         </div>
-                      </Card>
-                    ))}
-                  </div>
-                )}
+                        <Button size="sm" variant="ghost" onClick={() => handleUnblockSlot(slot.id)} className="text-red-500 hover:bg-red-500/10"><Trash2 className="w-4 h-4" /></Button>
+                      </div>
+                    ))
+                  )}
+                </div>
               </Card>
             </div>
           </TabsContent>
         </Tabs>
       </div>
-      {/* MODAL DE EDIÇÃO DE CLIENTE */}
+
+      {/* MODAL DE EDIÇÃO COMPLETO */}
       {editingCustomer && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-          <Card className="bg-[#111] border-white/10 p-6 w-full max-w-md">
-            <h3 className="text-xl font-bold text-white mb-4">Editar Cliente</h3>
-            <form onSubmit={handleUpdateCustomer} className="space-y-4">
+        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-4">
+          <Card className="bg-[#111] border border-[#FFD700]/30 p-8 w-full max-w-md shadow-2xl">
+            <div className="flex items-center gap-3 mb-6">
+              <Users className="text-[#FFD700] w-6 h-6" />
+              <h3 className="text-2xl font-bold text-white">Editar Cliente</h3>
+            </div>
+            <form onSubmit={handleUpdateCustomer} className="space-y-5">
               <div>
-                <Label className="text-white">Nome Completo</Label>
-                <Input 
-                  value={editFormData.full_name}
-                  onChange={(e) => setEditFormData({...editFormData, full_name: e.target.value})}
-                  className="bg-black border-white/10 text-white"
-                />
+                <Label className="text-white mb-2 block">Nome Completo</Label>
+                <Input value={editFormData.full_name} onChange={(e) => setEditFormData({...editFormData, full_name: e.target.value})} className="bg-black border-white/10 text-white h-12" />
               </div>
               <div>
-                <Label className="text-white">Telefone</Label>
-                <Input 
-                  value={editFormData.phone}
-                  onChange={(e) => setEditFormData({...editFormData, phone: e.target.value})}
-                  className="bg-black border-white/10 text-white"
-                />
+                <Label className="text-white mb-2 block">Telefone</Label>
+                <Input value={editFormData.phone} onChange={(e) => setEditFormData({...editFormData, phone: e.target.value})} className="bg-black border-white/10 text-white h-12" />
               </div>
               <div>
-                <Label className="text-white">E-mail</Label>
-                <Input 
-                  value={editFormData.email}
-                  onChange={(e) => setEditFormData({...editFormData, email: e.target.value})}
-                  className="bg-black border-white/10 text-white"
-                />
+                <Label className="text-white mb-2 block">E-mail</Label>
+                <Input value={editFormData.email} onChange={(e) => setEditFormData({...editFormData, email: e.target.value})} className="bg-black border-white/10 text-white h-12" placeholder="opcional@exemplo.com" />
               </div>
-              <div className="flex gap-2 pt-2">
-                <Button type="submit" className="flex-1 bg-[#FFD700] text-black hover:bg-[#FFD700]/80">Salvar</Button>
-                <Button type="button" onClick={() => setEditingCustomer(null)} variant="outline" className="flex-1 text-white border-white/20">Cancelar</Button>
+              <div className="flex gap-3 pt-4">
+                <Button type="submit" className="flex-1 bg-[#FFD700] text-black hover:bg-[#FFD700]/80 font-bold h-12">Guardar Alterações</Button>
+                <Button type="button" onClick={() => setEditingCustomer(null)} variant="outline" className="flex-1 text-white border-white/20 h-12">Cancelar</Button>
               </div>
             </form>
           </Card>
