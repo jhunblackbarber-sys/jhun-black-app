@@ -335,6 +335,15 @@ async def update_appointment(appointment_id: str, update_data: AppointmentUpdate
 
 # ========== AVAILABLE SLOTS ==========
 
+@app.get("/available-slots")
+def get_available_slots(date: str):
+    # Converte a string da data para um objeto datetime
+    date_obj = datetime.strptime(date, "%Y-%m-%d")
+    
+    # 6 representa Domingo (0=Segunda, 1=Terça...)
+    if date_obj.weekday() == 6:
+        return [] # Retorna lista vazia, então o site dirá "Sem horários"
+
 @api_router.get("/available-slots")
 async def get_available_slots(date: str, service_id: str):
     # Get service duration
@@ -598,3 +607,27 @@ async def initialize_services():
         ]
         await db.services.insert_many(services)
         logger.info("Services initialized")
+
+@app.put("/appointments/{appointment_id}")
+def update_appointment_details(appointment_id: str, data: dict):
+    # Esta rota permite mudar qualquer coisa: status, hora, data
+    # Se data['status'] for 'cancelled', o horário é liberado
+    appointment_ref = db.collection('appointments').document(appointment_id)
+    appointment_ref.update(data)
+    return {"status": "success"}
+
+@app.delete("/appointments/{appointment_id}")
+def delete_appointment(appointment_id: str):
+    db.collection('appointments').document(appointment_id).delete()
+    return {"status": "deleted"}
+
+@app.put("/customers/{customer_id}")
+def update_customer(customer_id: str, data: dict):
+    customer_ref = db.collection('customers').document(customer_id)
+    customer_ref.update(data)
+    return {"status": "updated"}
+
+@app.delete("/customers/{customer_id}")
+def delete_customer(customer_id: str):
+    db.collection('customers').document(customer_id).delete()
+    return {"status": "deleted"}
