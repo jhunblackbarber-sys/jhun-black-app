@@ -252,28 +252,26 @@ async def create_appointment(appointment_data: AppointmentCreate):
         )
         await db.customers.insert_one(new_customer.model_dump())
     
-    # Dados para Notificações (usados pelo mock e e-mail)
-    notification_data = {
-        "service": service['name'],
-        "date": date,
-        "time": time,
-        "customer_name": appointment_data.customer_name
-    }
-    
-    # --- INÍCIO DO NOVO BLOCO DE NOTIFICAÇÕES REAIS ---
+    # Dados para Notificações
+    notification_data = {
+        "service": service['name'],
+        "date": date,
+        "time": time,
+        "customer_name": appointment_data.customer_name
+    }
+
+    # --- INICIO DO BLOCO DE NOTIFICACOES REAIS ---
     
-    # 1. Notificação SMS (Mantendo o Mock por enquanto)
+    # 1. Notificacao SMS Mock
     send_notification_mock("sms", appointment_data.customer_phone, notification_data, appointment_data.language)
 
-    # 2. Notificação de E-mail (Envia para o Cliente E para a Barbearia)
+    # 2. Notificacao de E-mail (Cliente e Admin)
     if sg_client and appointment_data.customer_email:
         try:
-            # Criamos uma lista de destinatários: o cliente e a barbearia
             destinatarios = [appointment_data.customer_email, ADMIN_EMAIL]
-            
             email_msg = Mail(
                 from_email=FROM_EMAIL,
-                to_emails=destinatarios, # Envia para ambos
+                to_emails=destinatarios,
                 subject=f"Novo Agendamento: {service['name']} - {appointment_data.customer_name}",
                 html_content=f"""
                 <div style="font-family: sans-serif; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">
@@ -291,32 +289,24 @@ async def create_appointment(appointment_data: AppointmentCreate):
                 """
             )
             sg_client.send(email_msg)
-            print(f"E-mail enviado para o cliente e para {ADMIN_EMAIL}")
+            print(f"E-mail enviado para {destinatarios}")
         except Exception as e:
             print(f"Erro ao enviar e-mail: {e}")
-    
-    # 3. Notificação WhatsApp para o Admin (REAL via Twilio)
+
+    # 3. Notificacao WhatsApp Admin
     if twilio_client and TWILIO_TO_NUMBER and TWILIO_FROM_NUMBER:
         try:
-            whatsapp_body = f"""🚨 NOVO AGENDAMENTO! 🚨
-
-Serviço: {service['name']}
-Cliente: {appointment_data.customer_name}
-Data: {date} às {time}
-Telefone: {appointment_data.customer_phone}"""
-
+            whatsapp_body = f"🚨 NOVO AGENDAMENTO! 🚨\n\nServiço: {service['name']}\nCliente: {appointment_data.customer_name}\nData: {date} às {time}\nTelefone: {appointment_data.customer_phone}"
             twilio_client.messages.create(
                 from_=TWILIO_FROM_NUMBER,
                 to=TWILIO_TO_NUMBER,
                 body=whatsapp_body
             )
-            print("WhatsApp real enviado para o admin!")
+            print("WhatsApp enviado para o admin!")
         except Exception as e:
-            print(f"Erro ao enviar WhatsApp real: {e}")
+            print(f"Erro ao enviar WhatsApp: {e}")
 
-    # --- FIM DO BLOCO DE NOTIFICAÇÕES ---
-    
-    return appointment
+    return appointment
 
 @api_router.get("/appointments", response_model=List[Appointment])
 async def get_appointments(date: Optional[str] = None, status: Optional[str] = None):
