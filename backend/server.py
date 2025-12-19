@@ -14,6 +14,12 @@ import uuid
 from datetime import datetime, timezone, timedelta
 import hashlib
 
+# 1. Configurar Logging logo no início para evitar erros de referência
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -23,13 +29,12 @@ mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
 
-# --- Configuração do Twilio ---
+# --- Configuração do Twilio (WhatsApp) ---
 TWILIO_ACCOUNT_SID = os.getenv('TWILIO_ACCOUNT_SID')
 TWILIO_AUTH_TOKEN = os.getenv('TWILIO_AUTH_TOKEN')
 TWILIO_FROM_NUMBER = os.getenv('TWILIO_FROM_NUMBER') # whatsapp:+1...
 TWILIO_TO_NUMBER = os.getenv('TWILIO_TO_NUMBER')     # whatsapp:+1... (Seu número)
 
-# Inicializa o cliente Twilio
 try:
     twilio_client = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
 except Exception as e:
@@ -65,8 +70,6 @@ def ping():
 # -------------------- Criação do router --------------------
 api_router = APIRouter(prefix="/api")
 
-# -------------------- Incluir router no app --------------------
-app.include_router(api_router)
 
 # ==================== MODELS ====================
 
@@ -249,7 +252,7 @@ async def create_appointment(appointment_data: AppointmentCreate):
         )
         await db.customers.insert_one(new_customer.model_dump())
     
-    # Dados para Notificações
+    # Dados para Notificações (usados pelo mock e e-mail)
     notification_data = {
         "service": service['name'],
         "date": date,
@@ -554,6 +557,7 @@ async def get_dashboard_stats():
 # Include the router in the main app
 app.include_router(api_router)
 
+# CORS
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
@@ -562,12 +566,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
-logger = logging.getLogger(__name__)
 
 @app.on_event("shutdown")
 async def shutdown_db_client():
