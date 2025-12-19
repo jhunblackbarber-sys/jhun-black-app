@@ -170,26 +170,25 @@ export default function AdminDashboard() {
   
 const handleCancel = async (id) => {
   try {
-    // Chamada para a nova rota que criámos no backend
+    // Usamos patch para manter a consistência com o que já tinhas
     await axios.patch(`${API}/appointments/${id}`, { status: 'cancelled' });
     toast.success('Agendamento cancelado e horário libertado');
-    // Atualiza a lista na tela
-    fetchAppointments();
-    fetchStats();
+    // Nomes corrigidos para as funções que existem no seu ficheiro:
+    fetchDashboardData(); 
   } catch (error) {
     console.error('Error cancelling appointment:', error);
     toast.error('Erro ao cancelar agendamento');
   }
 };
 
-  const handleUpdateCustomer = async (e) => {
+const handleUpdateCustomer = async (e) => {
   e.preventDefault();
   try {
-    // Chamada para a rota PUT que criámos no server.py 
     await axios.put(`${API}/customers/${editingCustomer.id}`, editFormData);
     toast.success('Cliente atualizado com sucesso!');
-    setEditingCustomer(null); // Fecha o modo de edição
-    fetchCustomers(); // Recarrega a lista
+    setEditingCustomer(null);
+    // Nome corrigido para a função que carrega os dados:
+    fetchDashboardData(); 
   } catch (error) {
     console.error('Erro ao atualizar cliente:', error);
     toast.error('Erro ao atualizar dados do cliente');
@@ -334,7 +333,7 @@ const handleCancel = async (id) => {
                             <div className="flex gap-2">
                               <Button
                                 size="sm"
-                                onClick={() => handleComplete(appointment.id)}
+                                onClick={() => handleComplete(apt.id)}
                                 className="bg-[#00df9a] hover:bg-[#00bf83] text-black gap-2"
                               >
                                 <CheckCircle className="w-4 h-4" />
@@ -342,7 +341,7 @@ const handleCancel = async (id) => {
                               </Button>
                               <Button
                                 size="sm"
-                                onClick={() => handleNoShow(appointment.id)}
+                                onClick={() => handleNoShow(apt.id)}
                                 variant="outline"
                                 className="border-red-500 text-red-500 hover:bg-red-500 hover:text-white gap-2"
                               >
@@ -352,7 +351,7 @@ const handleCancel = async (id) => {
                               {/* NOVO BOTÃO DE CANCELAR ABAIXO */}
                               <Button
                                 size="sm"
-                                onClick={() => handleCancel(appointment.id)}
+                                onClick={() => handleCancel(apt.id)}
                                 variant="ghost"
                                 className="text-gray-400 hover:text-white hover:bg-white/10 gap-2"
                               >
