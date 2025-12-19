@@ -4,6 +4,8 @@ from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 import os
 from twilio.rest import Client
+from sendgrid import SendGridAPIClient
+from sendgrid.helpers.mail import Mail
 import logging
 from pathlib import Path
 from pydantic import BaseModel, Field, ConfigDict
@@ -11,6 +13,7 @@ from typing import List, Optional
 import uuid
 from datetime import datetime, timezone, timedelta
 import hashlib
+
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -28,11 +31,22 @@ TWILIO_TO_NUMBER = os.getenv('TWILIO_TO_NUMBER')     # whatsapp:+1... (Seu nú
 
 # Inicializa o cliente Twilio
 try:
-    twilio_client = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
-    print("Twilio Client Initialized Successfully")
+    twilio_client = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
 except Exception as e:
-    print(f"Error initializing Twilio Client: {e}")
-    twilio_client = None  # Garante que não haverá erro se as credenciais estiverem faltando
+    print(f"Erro Twilio: {e}")
+    twilio_client = None   # Garante que não haverá erro se as credenciais estiverem faltando
+
+# --- Configuração do SendGrid (E-mail) ---
+SENDGRID_API_KEY = os.getenv('SENDGRID_API_KEY')
+# Use EXATAMENTE o e-mail que você verificou no SendGrid
+FROM_EMAIL = "jhunblackbarber@gmail.com" 
+ADMIN_EMAIL = "jhunblackbarber@gmail.com"
+
+try:
+    sg_client = SendGridAPIClient(SENDGRID_API_KEY)
+except Exception as e:
+    print(f"Erro SendGrid: {e}")
+    sg_client = None
 
 # -------------------- FastAPI app --------------------
 # Create the main app without a prefix
@@ -243,35 +257,61 @@ async def create_appointment(appointment_data: AppointmentCreate):
         "customer_name": appointment_data.customer_name
     }
     
-    # Notificações ao Cliente (Mocks - Manter por enquanto)
-    send_notification_mock("sms", appointment_data.customer_phone, notification_data, appointment_data.language)
-    if appointment_data.customer_email:
-        send_notification_mock("email", appointment_data.customer_email, notification_data, appointment_data.language)
-    
-    # Notificação ao Admin (Twilio WhatsApp REAL)
-    # Verifica se o cliente Twilio foi inicializado corretamente e se os números de destino/origem estão configurados
-    if twilio_client and TWILIO_TO_NUMBER and TWILIO_FROM_NUMBER:
-        try:
-            # Mensagem para o seu marido/admin
-            message_body = f"""
-                🚨 NOVO AGENDAMENTO! 🚨
+    # --- INÍCIO DO NOVO BLOCO DE NOTIFICAÇÕES REAIS ---
+    
+    # 1. Notificação SMS (Mantendo o Mock por enquanto)
+    send_notification_mock("sms", appointment_data.customer_phone, notification_data, appointment_data.language)
 
-                    Serviço: {service['name']}
-                    Cliente: {appointment_data.customer_name}
-                    Data: {date} às {time}
-                    Telefone: {appointment_data.customer_phone}
-                    """
+    # 2. Notificação de E-mail (Envia para o Cliente E para a Barbearia)
+    if sg_client and appointment_data.customer_email:
+        try:
+            # Criamos uma lista de destinatários: o cliente e a barbearia
+            destinatarios = [appointment_data.customer_email, ADMIN_EMAIL]
+            
+            email_msg = Mail(
+                from_email=FROM_EMAIL,
+                to_emails=destinatarios, # Envia para ambos
+                subject=f"Novo Agendamento: {service['name']} - {appointment_data.customer_name}",
+                html_content=f"""
+                <div style="font-family: sans-serif; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">
+                    <h2 style="color: #333;">Confirmação de Agendamento</h2>
+                    <p>Um novo horário foi reservado na <strong>Jhun Black Barber</strong>.</p>
+                    <hr style="border: 0; border-top: 1px solid #eee;">
+                    <p><strong>Cliente:</strong> {appointment_data.customer_name}</p>
+                    <p><strong>Serviço:</strong> {service['name']}</p>
+                    <p><strong>Data:</strong> {date}</p>
+                    <p><strong>Hora:</strong> {time}</p>
+                    <p><strong>Telefone do Cliente:</strong> {appointment_data.customer_phone}</p>
+                    <br>
+                    <p style="font-size: 12px; color: #666;">Este é um e-mail automático enviado para o cliente e para a administração.</p>
+                </div>
+                """
+            )
+            sg_client.send(email_msg)
+            print(f"E-mail enviado para o cliente e para {ADMIN_EMAIL}")
+        except Exception as e:
+            print(f"Erro ao enviar e-mail: {e}")
+    
+    # 3. Notificação WhatsApp para o Admin (REAL via Twilio)
+    if twilio_client and TWILIO_TO_NUMBER and TWILIO_FROM_NUMBER:
+        try:
+            whatsapp_body = f"""🚨 NOVO AGENDAMENTO! 🚨
 
-            message = twilio_client.messages.create(
-                from_=TWILIO_FROM_NUMBER,
-                to=TWILIO_TO_NUMBER,
-                body=message_body
-            )
-            # O print é útil para debug no log do Render
-            print(f"WhatsApp notification sent. SID: {message.sid}")
-        except Exception as e:
-            # Não queremos falhar o agendamento se o WhatsApp falhar
-            print(f"Error sending Twilio WhatsApp notification: {e}")
+Serviço: {service['name']}
+Cliente: {appointment_data.customer_name}
+Data: {date} às {time}
+Telefone: {appointment_data.customer_phone}"""
+
+            twilio_client.messages.create(
+                from_=TWILIO_FROM_NUMBER,
+                to=TWILIO_TO_NUMBER,
+                body=whatsapp_body
+            )
+            print("WhatsApp real enviado para o admin!")
+        except Exception as e:
+            print(f"Erro ao enviar WhatsApp real: {e}")
+
+    # --- FIM DO BLOCO DE NOTIFICAÇÕES ---
     
     return appointment
 
