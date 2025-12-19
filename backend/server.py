@@ -33,7 +33,7 @@ db = client[os.environ['DB_NAME']]
 TWILIO_ACCOUNT_SID = os.getenv('TWILIO_ACCOUNT_SID')
 TWILIO_AUTH_TOKEN = os.getenv('TWILIO_AUTH_TOKEN')
 TWILIO_FROM_NUMBER = os.getenv('TWILIO_FROM_NUMBER') # whatsapp:+1...
-TWILIO_TO_NUMBER = os.getenv('TWILIO_TO_NUMBER')     # whatsapp:+1... (Seu número)
+TWILIO_TO_NUMBER = os.getenv('TWILIO_TO_NUMBER')  # whatsapp:+1... (Seu número)
 
 try:
     twilio_client = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
