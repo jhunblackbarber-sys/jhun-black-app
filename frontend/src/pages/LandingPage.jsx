@@ -106,7 +106,7 @@ export default function LandingPage() {
       <div className="relative z-10 flex flex-col items-center justify-center min-h-screen px-4 text-center">
         {/* Logo Reduzida */}
         <div className="mb-8 animate-fade-in-up">
-          <div className="w-40 h-40 md:w-52 md:h-52 mx-auto rounded-full bg-white flex items-center justify-center shadow-2xl">
+          <div className="w-32 h-32 md:w-44 md:h-44 mx-auto rounded-full bg-white flex items-center justify-center shadow-2xl">
             <img 
               src="https://customer-assets.emergentagent.com/job_jhunblack/artifacts/qsmwfje6_Design%20sem%20nome.png"
               alt="Jhun Black Barber Logo"
