@@ -110,7 +110,7 @@ export default function LandingPage() {
             <img 
               src="https://customer-assets.emergentagent.com/job_jhunblack/artifacts/qsmwfje6_Design%20sem%20nome.png"
               alt="Jhun Black Barber Logo"
-              className="w-28 h-28 md:w-36 md:h-36"
+              className="w-24 h-24 md:w-32 md:h-32"
             />
           </div>
         </div>
