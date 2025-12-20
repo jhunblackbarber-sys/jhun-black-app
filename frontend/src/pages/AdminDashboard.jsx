@@ -17,9 +17,10 @@ import {
   XCircle,
   Ban,
   LogOut,
-  History,
-  Trash2,
   Plus,
+  Trash2,
+  History,
+  Search
 } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -39,6 +40,7 @@ export default function AdminDashboard() {
   const [appointments, setAppointments] = useState([]);
   const [customers, setCustomers] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [customerHistory, setCustomerHistory] = useState(null);
   const [selectedDates, setSelectedDates] = useState([new Date()]);
   const [loading, setLoading] = useState(false);
   const [blockedSlots, setBlockedSlots] = useState([]);
@@ -169,6 +171,24 @@ export default function AdminDashboard() {
     }
   };
 
+  const fetchCustomerHistory = async (customer) => {
+    try {
+      // Busca todos os agendamentos para filtrar os deste cliente
+      const response = await axios.get(`${API}/appointments`);
+      const history = response.data.filter(apt => 
+        apt.customer_name === customer.full_name || apt.customer_id === customer.id
+      );
+      
+      setCustomerHistory({
+        name: customer.full_name,
+        services: history
+      });
+    } catch (error) {
+      console.error('Erro ao carregar histórico:', error);
+      toast.error('Não foi possível carregar o histórico');
+    }
+  };
+  
   const handleLogout = () => {
     localStorage.removeItem('admin_token');
     navigate('/');
@@ -343,36 +363,32 @@ export default function AdminDashboard() {
                         <p className="text-white/40 text-xs mt-1">{customer.total_appointments} visitas</p>
                       </div>
                       <div className="flex gap-2">
-                        {/* Botão de Editar (O que já existia) */}
                         <Button 
-                          size="sm"
+                          size="sm" 
                           variant="ghost" 
-                          onClick={() => {
-                            setEditingCustomer(customer);
-                            setEditFormData({
-                              full_name: customer.full_name,
-                              phone: customer.phone,
-                              email: customer.email || ''
-                              });
-                            }}
+                          onClick={() => { 
+                            setEditingCustomer(customer); 
+                            setEditFormData({ 
+                              full_name: customer.full_name, 
+                              phone: customer.phone, 
+                              email: customer.email || '' 
+                            }); 
+                          }} 
                           className="text-[#FFD700] hover:bg-[#FFD700]/10"
                           title="Editar Cliente"
-                          >
+                        >
                           <Plus className="w-4 h-4" />
-                          </Button>
-                        {/* NOVO: Botão de Histórico */}
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => {
-                            setSearchTerm(customer.full_name); // Filtra a lista pelo nome do cliente
-                            toast.info(`A filtrar histórico de ${customer.full_name.split(' ')[0]}...`);
-                            }}
+                        </Button>
+
+                        <Button 
+                          size="sm" 
+                          variant="ghost" 
+                          onClick={() => fetchCustomerHistory(customer)}
                           className="text-blue-400 hover:bg-blue-400/10"
                           title="Ver Histórico"
-                          >
+                        >
                           <History className="w-4 h-4" />
-                          </Button>
+                        </Button>
                       </div>
                     </div>
                   </Card>
@@ -464,6 +480,53 @@ export default function AdminDashboard() {
           </Card>
         </div>
       )}
+
+      {/* MODAL DE HISTÓRICO - JANELA FLUTUANTE */}
+      {customerHistory && (
+        <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
+          <Card className="bg-[#0A0A0A] border border-blue-500/30 p-6 w-full max-w-2xl max-h-[80vh] flex flex-col shadow-2xl">
+            <div className="flex items-center justify-between mb-6 border-b border-white/10 pb-4">
+              <div className="flex items-center gap-3">
+                <History className="text-blue-400 w-6 h-6" />
+                <div>
+                  <h3 className="text-xl font-bold text-white">{customerHistory.name}</h3>
+                  <p className="text-xs text-white/40 uppercase tracking-widest">Histórico de Serviços</p>
+                </div>
+              </div>
+              <Button onClick={() => setCustomerHistory(null)} variant="ghost" className="text-white/50 hover:text-white">
+                Fechar
+              </Button>
+            </div>
+
+            <div className="overflow-y-auto flex-1 space-y-3 pr-2 custom-scrollbar">
+              {customerHistory.services.length === 0 ? (
+                <div className="text-center py-20 border-2 border-dashed border-white/5 rounded-xl">
+                   <p className="text-white/20">Nenhum registro encontrado para este cliente.</p>
+                </div>
+              ) : (
+                customerHistory.services.map((apt) => (
+                  <div key={apt.id} className="bg-white/5 border border-white/5 p-4 rounded-lg flex justify-between items-center group hover:border-blue-500/30 transition-all">
+                    <div>
+                      <p className="text-[#FFD700] font-bold text-lg">{apt.service_name}</p>
+                      <div className="flex items-center gap-3 text-white/50 text-sm mt-1">
+                        <span className="flex items-center gap-1"><CalendarIcon className="w-3 h-3" /> {apt.date}</span>
+                        <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {apt.time}</span>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                       <span className={`text-[10px] px-2 py-1 rounded-full font-black uppercase ${
+                         apt.status === 'completed' ? 'bg-green-500/20 text-green-500' : 'bg-red-500/20 text-red-500'
+                       }`}>
+                         {apt.status === 'completed' ? 'Concluído' : 'Cancelado'}
+                       </span>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </Card>
+        </div>
+      )}      
     </div>
   );
 }
