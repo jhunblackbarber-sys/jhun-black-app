@@ -266,9 +266,17 @@ async def create_appointment(appointment_data: AppointmentCreate):
     send_notification_mock("sms", appointment_data.customer_phone, notification_data, appointment_data.language)
 
     # 2. Notificacao de E-mail (Cliente e Admin)
-    if sg_client and appointment_data.customer_email:
+    # A verificação agora é apenas se o SendGrid (sg_client) está configurado
+    if sg_client:
         try:
-            destinatarios = [appointment_data.customer_email, ADMIN_EMAIL]
+            # Lista de destinatários começa SEMPRE com o Admin (seu marido)
+            destinatarios = [ADMIN_EMAIL]
+            
+            # Se o cliente forneceu e-mail, adiciona ele na lista
+            if appointment_data.customer_email and appointment_data.customer_email.strip():
+                destinatarios.append(appointment_data.customer_email)
+
+            # Cria o e-mail
             email_msg = Mail(
                 from_email=FROM_EMAIL,
                 to_emails=destinatarios,
@@ -284,12 +292,15 @@ async def create_appointment(appointment_data: AppointmentCreate):
                     <p><strong>Hora:</strong> {time}</p>
                     <p><strong>Telefone do Cliente:</strong> {appointment_data.customer_phone}</p>
                     <br>
-                    <p style="font-size: 12px; color: #666;">Este é um e-mail automático enviado para o cliente e para a administração.</p>
+                    <p style="font-size: 12px; color: #666;">Este é um e-mail automático enviado para a administração e para o cliente (se fornecido).</p>
                 </div>
                 """
             )
+            
+            # Envia
             sg_client.send(email_msg)
-            print(f"E-mail enviado para {destinatarios}")
+            print(f"E-mail enviado para: {destinatarios}")
+            
         except Exception as e:
             print(f"Erro ao enviar e-mail: {e}")
 
