@@ -7,7 +7,7 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Calendar } from '@/components/ui/calendar';
-import { enUS } from 'date-fns/locale';
+import { enUS, ptBR, es } from 'date-fns/locale';
 import { ArrowLeft, Check, Clock, DollarSign } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -42,7 +42,7 @@ export default function BookingFlow() {
       confirm: 'CONFIRM BOOKING',
       fullName: 'Full Name',
       phone: 'Phone Number',
-      email: 'Email (Optional)',
+      email: 'Email (Optional - To receive appointment details)',
       selectDate: 'Select a date',
       selectTime: 'Select a time',
       noSlots: 'No available slots for this date',
@@ -64,7 +64,7 @@ export default function BookingFlow() {
       confirm: 'CONFIRMAR AGENDAMENTO',
       fullName: 'Nome Completo',
       phone: 'Telefone',
-      email: 'Email (Opcional)',
+      email: 'Email (Opcional - Para detalhes do agendamento)',
       selectDate: 'Selecione uma data',
       selectTime: 'Selecione um horário',
       noSlots: 'Sem horários disponíveis para esta data',
@@ -74,6 +74,28 @@ export default function BookingFlow() {
       service: 'Serviço',
       date: 'Data',
       time: 'Horário',
+      total: 'Total',
+    },
+    es: {
+      step1Title: 'SELECCIONE EL SERVICIO',
+      step2Title: 'ELIJA FECHA Y HORA',
+      step3Title: 'SU INFORMACIÓN',
+      step4Title: 'CONFIRMACIÓN',
+      next: 'SIGUIENTE',
+      back: 'VOLVER',
+      confirm: 'CONFIRMAR CITA',
+      fullName: 'Nombre Completo',
+      phone: 'Teléfono',
+      email: 'Correo (Opcional - Para detalles de la cita)',
+      selectDate: 'Seleccione una fecha',
+      selectTime: 'Seleccione un horario',
+      noSlots: 'No hay horarios disponibles para esta fecha',
+      bookingSuccess: '¡Cita confirmada! ¡Nos vemos pronto!',
+      bookingError: 'Error en la reserva. Intente de nuevo.',
+      confirmationMsg: '¡Su cita está confirmada!',
+      service: 'Servicio',
+      date: 'Fecha',
+      time: 'Hora',
       total: 'Total',
     }
   };
@@ -288,7 +310,8 @@ export default function BookingFlow() {
                     selected={selectedDate}
                     onSelect={handleDateSelect}
                     disabled={isPastDate}
-                    locale={enUS}
+                    // Esta linha abaixo muda o idioma do calendário dinamicamente:
+                    locale={language === 'pt' ? ptBR : language === 'es' ? es : enUS}
                     className="rounded-md border border-white/20 bg-black/40 text-white"
                     data-testid="booking-calendar"
                   />
