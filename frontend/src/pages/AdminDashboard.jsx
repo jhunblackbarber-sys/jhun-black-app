@@ -153,18 +153,6 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleDeleteCustomer = async (id) => {
-    if (window.confirm("Deseja mesmo eliminar este cliente?")) {
-      try {
-        await axios.delete(`${API}/customers/${id}`);
-        toast.success('Cliente removido');
-        fetchDashboardData();
-      } catch (error) {
-        toast.error('Erro ao remover cliente');
-      }
-    }
-  };
-
   const handleDeleteAppointment = async (id) => {
     if (window.confirm("Deseja cancelar este agendamento?")) {
       try {
@@ -331,8 +319,9 @@ export default function AdminDashboard() {
                         <p className="text-white/40 text-xs mt-1">{customer.total_appointments} visitas</p>
                       </div>
                       <div className="flex gap-1">
-                        <Button size="sm" variant="ghost" onClick={() => { setEditingCustomer(customer); setEditFormData({ full_name: customer.full_name, phone: customer.phone, email: customer.email || '' }); }} className="text-[#FFD700] hover:bg-[#FFD700]/10"><Plus className="w-4 h-4" /></Button>
-                        <Button size="sm" variant="ghost" onClick={() => handleDeleteCustomer(customer.id)} className="text-red-500 hover:bg-red-500/10"><Trash2 className="w-4 h-4" /></Button>
+                        <Button size="sm" variant="ghost" onClick={() => { setEditingCustomer(customer); setEditFormData({ full_name: customer.full_name, phone: customer.phone, email: customer.email || '' }); }} className="text-[#FFD700] hover:bg-[#FFD700]/10">
+                          <Plus className="w-4 h-4" />
+                        </Button>
                       </div>
                     </div>
                   </Card>
