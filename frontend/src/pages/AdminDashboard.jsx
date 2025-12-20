@@ -17,8 +17,8 @@ import {
   XCircle,
   Ban,
   LogOut,
+  History,
   Plus,
-  Trash2
 } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -285,11 +285,34 @@ export default function AdminDashboard() {
                           <div className="flex gap-2 border-t border-white/5 pt-3">
                             {apt.status === 'scheduled' && (
                               <>
-                                <Button size="sm" onClick={() => handleStatusUpdate(apt.id, 'completed')} className="bg-green-600 hover:bg-green-700 text-white flex-1"><CheckCircle className="w-4 h-4 mr-1" /> Concluir</Button>
-                                <Button size="sm" onClick={() => handleCancel(apt.id)} variant="outline" className="border-red-500 text-red-500 flex-1"><Ban className="w-4 h-4 mr-1" /> Cancelar</Button>
+                                <Button 
+                                  size="sm" 
+                                  onClick={() => 
+                                    handleStatusUpdate(apt.id, 'completed')} 
+                                  className="bg-green-600 hover:bg-green-700 text-white flex-1">
+                                  <CheckCircle className="w-4 h-4 mr-1" /> 
+                                  Concluir
+                                </Button>
+                                <Button 
+                                  size="sm" 
+                                  onClick={() => handleCancel(apt.id)} 
+                                  variant="outline" 
+                                  className="border-red-500 text-red-500 flex-1">
+                                  <Ban 
+                                    className="w-4 h-4 mr-1" /> 
+                                  Cancelar
+                                </Button>
                               </>
                             )}
-                            <Button size="sm" variant="ghost" onClick={() => handleDeleteAppointment(apt.id)} className="text-white/30 hover:text-red-500"><Trash2 className="w-4 h-4" /></Button>
+                            <Button 
+                              size="sm" 
+                              variant="ghost" 
+                              onClick={() => handleDeleteAppointment(apt.id)} 
+                              className="text-white/30 hover:text-red-500"
+                              >
+                              <Trash2 
+                                className="w-4 h-4" />
+                            </Button>
                           </div>
                         </div>
                       </Card>
@@ -318,10 +341,37 @@ export default function AdminDashboard() {
                         <p className="text-[#FFD700] text-sm">{customer.phone}</p>
                         <p className="text-white/40 text-xs mt-1">{customer.total_appointments} visitas</p>
                       </div>
-                      <div className="flex gap-1">
-                        <Button size="sm" variant="ghost" onClick={() => { setEditingCustomer(customer); setEditFormData({ full_name: customer.full_name, phone: customer.phone, email: customer.email || '' }); }} className="text-[#FFD700] hover:bg-[#FFD700]/10">
+                      <div className="flex gap-2">
+                        {/* Botão de Editar (O que já existia) */}
+                        <Button 
+                          size="sm"
+                          variant="ghost" 
+                          onClick={() => {
+                            setEditingCustomer(customer);
+                            setEditFormData({
+                              full_name: customer.full_name,
+                              phone: customer.phone,
+                              email: customer.email || ''
+                              });
+                            }}
+                          className="text-[#FFD700] hover:bg-[#FFD700]/10"
+                          title="Editar Cliente"
+                          >
                           <Plus className="w-4 h-4" />
-                        </Button>
+                          </Button>
+                        {/* NOVO: Botão de Histórico */}
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => {
+                            setSearchTerm(customer.full_name); // Filtra a lista pelo nome do cliente
+                            toast.info(`A filtrar histórico de ${customer.full_name.split(' ')[0]}...`);
+                            }}
+                          className="text-blue-400 hover:bg-blue-400/10"
+                          title="Ver Histórico"
+                          >
+                          <History className="w-4 h-4" />
+                          </Button>
                       </div>
                     </div>
                   </Card>
