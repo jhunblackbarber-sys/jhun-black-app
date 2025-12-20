@@ -11,7 +11,7 @@ import { enUS, ptBR, es } from 'date-fns/locale';
 import { ArrowLeft, Check, Clock, DollarSign } from 'lucide-react';
 import { format } from 'date-fns';
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
 export default function BookingFlow() {
@@ -64,7 +64,7 @@ export default function BookingFlow() {
       confirm: 'CONFIRMAR AGENDAMENTO',
       fullName: 'Nome Completo',
       phone: 'Telefone',
-      email: 'Email (Opcional - Para detalhes do agendamento)',
+      email: 'Email (Opcional - Para receber comprovante)',
       selectDate: 'Selecione uma data',
       selectTime: 'Selecione um horário',
       noSlots: 'Sem horários disponíveis para esta data',
@@ -86,7 +86,7 @@ export default function BookingFlow() {
       confirm: 'CONFIRMAR CITA',
       fullName: 'Nombre Completo',
       phone: 'Teléfono',
-      email: 'Correo (Opcional - Para detalles de la cita)',
+      email: 'Correo (Opcional - Para recibir detalles)',
       selectDate: 'Seleccione una fecha',
       selectTime: 'Seleccione un horario',
       noSlots: 'No hay horarios disponibles para esta fecha',
@@ -123,49 +123,45 @@ export default function BookingFlow() {
   };
 
   const fetchAvailableSlots = async () => {
-  if (!selectedDate || !selectedService) return;
-  
-  setLoading(true);
-  try {
-    const dateStr = format(selectedDate, 'yyyy-MM-dd');
-    const response = await axios.get(`${API}/available-slots`, {
-      params: {
-        date: dateStr,
-        service_id: selectedService.id
-      }
-    });
-
-    let slots = response.data.available_slots;
-
-    // LÓGICA PARA BLOQUEAR HORÁRIOS QUE JÁ PASSARAM (PADRÃO AM/PM)
-    const now = new Date();
-    const todayStr = format(now, 'yyyy-MM-dd');
-
-    if (dateStr === todayStr) {
-      const currentHour = now.getHours();
-      const currentMinutes = now.getMinutes();
-
-      slots = slots.filter(slot => {
-        // Assume que o slot vem como "02:30 PM"
-        const [time, modifier] = slot.split(' ');
-        let [hours, minutes] = time.split(':').map(Number);
-
-        // Converte para 24h para comparar com o relógio do sistema
-        if (modifier === 'PM' && hours < 12) hours += 12;
-        if (modifier === 'AM' && hours === 12) hours = 0;
-
-        return hours > currentHour || (hours === currentHour && minutes > currentMinutes);
+    if (!selectedDate || !selectedService) return;
+    
+    setLoading(true);
+    try {
+      const dateStr = format(selectedDate, 'yyyy-MM-dd');
+      const response = await axios.get(`${API}/available-slots`, {
+        params: {
+          date: dateStr,
+          service_id: selectedService.id
+        }
       });
-    }
 
-    setAvailableSlots(slots);
-  } catch (error) {
-    console.error('Error fetching slots:', error);
-    toast.error('Failed to load available times');
-  } finally {
-    setLoading(false);
-  }
-};
+      let slots = response.data.available_slots;
+
+      // Filtro AM/PM para horários passados
+      const now = new Date();
+      const todayStr = format(now, 'yyyy-MM-dd');
+
+      if (dateStr === todayStr) {
+        const currentHour = now.getHours();
+        const currentMinutes = now.getMinutes();
+
+        slots = slots.filter(slot => {
+          const [time, modifier] = slot.split(' ');
+          let [hours, minutes] = time.split(':').map(Number);
+          if (modifier === 'PM' && hours < 12) hours += 12;
+          if (modifier === 'AM' && hours === 12) hours = 0;
+          return hours > currentHour || (hours === currentHour && minutes > currentMinutes);
+        });
+      }
+
+      setAvailableSlots(slots);
+    } catch (error) {
+      console.error('Error fetching slots:', error);
+      toast.error('Failed to load available times');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleServiceSelect = (service) => {
     setSelectedService(service);
@@ -174,8 +170,8 @@ export default function BookingFlow() {
 
   const handleDateSelect = (date) => {
     setSelectedDate(date);
-    setSelectedTime(null); // Limpa o horário selecionado ao mudar a data
-    setAvailableSlots([]); // Limpa a lista antiga para evitar confusão visual enquanto carrega
+    setSelectedTime(null);
+    setAvailableSlots([]);
   };
 
   const handleTimeSelect = (time) => {
@@ -198,7 +194,6 @@ export default function BookingFlow() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
     if (!customerInfo.name || !customerInfo.phone) {
       toast.error('Please fill in required fields');
       return;
@@ -231,6 +226,16 @@ export default function BookingFlow() {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     return date < today;
+  };
+
+  // Configuração especial para o Calendário Espanhol começar no Domingo
+  const getLocale = () => {
+    if (language === 'pt') return ptBR;
+    if (language === 'es') {
+        // Clona o locale espanhol e força o início da semana no Domingo (0)
+        return { ...es, options: { ...es.options, weekStartsOn: 0 } };
+    }
+    return enUS;
   };
 
   return (
@@ -288,9 +293,6 @@ export default function BookingFlow() {
                       <span className="text-xl font-bold text-[#FFD700]">{service.price}</span>
                     </div>
                   </div>
-                  {service.description && (
-                    <p className="text-white/50 text-sm mt-2">{service.description}</p>
-                  )}
                 </Card>
               ))}
             </div>
@@ -310,8 +312,7 @@ export default function BookingFlow() {
                     selected={selectedDate}
                     onSelect={handleDateSelect}
                     disabled={isPastDate}
-                    // Esta linha abaixo muda o idioma do calendário dinamicamente:
-                    locale={language === 'pt' ? ptBR : language === 'es' ? es : enUS}
+                    locale={getLocale()}
                     className="rounded-md border border-white/20 bg-black/40 text-white"
                     data-testid="booking-calendar"
                   />
