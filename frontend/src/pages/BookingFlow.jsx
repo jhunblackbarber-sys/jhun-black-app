@@ -413,7 +413,7 @@ export default function BookingFlow() {
           </div>
         )}
 
-        {/* Step 4: Confirmation */}
+       {/* Step 4: Confirmation */}
         {step === 4 && (
           <div>
             <h2 className="text-[#FFD700] text-4xl font-bold text-center mb-8">{t.step4Title}</h2>
@@ -442,10 +442,37 @@ export default function BookingFlow() {
                 </div>
               </div>
 
+              {/* MINI PASSO A PASSO PARA INSTALAR NO CELULAR */}
+              <div className="mt-10 mb-8 p-5 bg-[#FFD700]/10 border border-[#FFD700]/30 rounded-xl text-left max-w-md mx-auto">
+                <p className="text-[#FFD700] font-bold text-sm mb-4 flex items-center justify-center md:justify-start">
+                  <Globe className="w-4 h-4 mr-2" /> 
+                  {language === 'en' ? 'SAVE AS APP ON YOUR PHONE:' : language === 'pt' ? 'SALVE COMO APP NO SEU CELULAR:' : 'GUARDAR COMO APP NO CELULAR:'}
+                </p>
+                
+                <div className="space-y-4 text-white/90 text-sm">
+                  <div className="flex items-start">
+                    <span className="bg-[#FFD700] text-black w-6 h-6 rounded-full flex items-center justify-center font-bold mr-3 shrink-0 text-xs">1</span>
+                    <p>
+                      {language === 'en' ? 'Tap the "Share" icon (iPhone) or the "3 dots" (Android).' : 
+                       language === 'pt' ? 'Toque no ícone de "Compartilhar" (no iPhone) ou nos "3 pontos" (no Android).' : 
+                       'Toque el icono "Compartir" (en iPhone) o los "3 puntos" (en Android).'}
+                    </p>
+                  </div>
+                  <div className="flex items-start">
+                    <span className="bg-[#FFD700] text-black w-6 h-6 rounded-full flex items-center justify-center font-bold mr-3 shrink-0 text-xs">2</span>
+                    <p>
+                      {language === 'en' ? 'Select "Add to Home Screen".' : 
+                       language === 'pt' ? 'Selecione "Adicionar à Tela de Início".' : 
+                       'Seleccione "Agregar a la pantalla de inicio".'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
               <Button
                 data-testid="back-home-btn"
                 onClick={() => navigate('/')}
-                className="bg-[#FFD700] hover:bg-[#FFC107] text-black font-bold px-8 py-6 text-lg"
+                className="bg-[#FFD700] hover:bg-[#FFC107] text-black font-bold px-8 py-6 text-lg w-full max-w-md"
               >
                 Back to Home
               </Button>
