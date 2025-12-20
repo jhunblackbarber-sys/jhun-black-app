@@ -1,3 +1,4 @@
+import minhaLogo from './assets/logo.png';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -108,9 +109,9 @@ export default function LandingPage() {
         <div className="mb-8 animate-fade-in-up">
           <div className="w-36 h-36 md:w-46 md:h-46 mx-auto rounded-full bg-white flex items-center justify-center shadow-2xl">
             <img 
-              src="https://customer-assets.emergentagent.com/job_jhunblack/artifacts/qsmwfje6_Design%20sem%20nome.png"
+              src={minhaLogo}
               alt="Jhun Black Barber Logo"
-              className="w-24 h-24 md:w-32 md:h-32"
+              className="w-28 h-28 md:w-36 md:h-36"
             />
           </div>
         </div>
