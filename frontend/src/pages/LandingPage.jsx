@@ -87,18 +87,19 @@ export default function LandingPage() {
             <ChevronDown className="w-4 h-4 ml-1 opacity-50 group-hover:rotate-180 transition-transform" />
           </Button>
           
-          <div className="absolute right-0 mt-2 hidden group-hover:flex flex-col gap-1 bg-black/95 border border-[#FFC107]/30 p-1 rounded-md shadow-2xl min-w-[110px]">
-            {['en', 'pt', 'es'].map((lang) => (
-              <Button
-                key={lang}
-                variant="ghost"
-                size="sm"
-                onClick={() => setLanguage(lang)}
-                className={`text-white hover:bg-[#FFC107] hover:text-black justify-start px-4 ${language === lang ? 'text-[#FFC107]' : ''}`}
-              >
-                {lang === 'en' ? '🇺🇸 EN' : lang === 'pt' ? '🇧🇷 PT' : '🇪🇸 ES'}
+        {/* Dropdown Menu - Ajustado para não sumir no PC */}
+        <div className="absolute right-0 mt-0 pt-1 hidden group-hover:flex flex-col gap-1 bg-black/95 border border-[#FFC107]/30 p-1 rounded-md shadow-2xl min-w-[110px]">
+          {['en', 'pt', 'es'].map((lang) => (
+            <Button
+              key={lang}
+              variant="ghost"
+              size="sm"
+              onClick={() => setLanguage(lang)}
+              className={`text-white hover:bg-[#FFC107] hover:text-black justify-start px-4 ${language === lang ? 'text-[#FFC107]' : ''}`}
+            >
+              {lang === 'en' ? '🇺🇸 EN' : lang === 'pt' ? '🇧🇷 PT' : '🇪🇸 ES'}
               </Button>
-            ))}
+          ))}
           </div>
         </div>
       </div>
