@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Calendar } from '@/components/ui/calendar';
 import { enUS, ptBR, es } from 'date-fns/locale';
-import { ArrowLeft, Check, Clock, DollarSign } from 'lucide-react';
+import { ArrowLeft, Check, Clock, DollarSign, Globe } from 'lucide-react';
 import { format } from 'date-fns';
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || process.env.REACT_APP_BACKEND_URL;
