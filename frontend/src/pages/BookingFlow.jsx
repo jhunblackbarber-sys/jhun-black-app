@@ -7,6 +7,7 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Calendar } from '@/components/ui/calendar';
+import { enUS } from 'date-fns/locale';
 import { ArrowLeft, Check, Clock, DollarSign } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -100,25 +101,49 @@ export default function BookingFlow() {
   };
 
   const fetchAvailableSlots = async () => {
-    if (!selectedDate || !selectedService) return;
-    
-    setLoading(true);
-    try {
-      const dateStr = format(selectedDate, 'yyyy-MM-dd');
-      const response = await axios.get(`${API}/available-slots`, {
-        params: {
-          date: dateStr,
-          service_id: selectedService.id
-        }
+  if (!selectedDate || !selectedService) return;
+  
+  setLoading(true);
+  try {
+    const dateStr = format(selectedDate, 'yyyy-MM-dd');
+    const response = await axios.get(`${API}/available-slots`, {
+      params: {
+        date: dateStr,
+        service_id: selectedService.id
+      }
+    });
+
+    let slots = response.data.available_slots;
+
+    // LÓGICA PARA BLOQUEAR HORÁRIOS QUE JÁ PASSARAM (PADRÃO AM/PM)
+    const now = new Date();
+    const todayStr = format(now, 'yyyy-MM-dd');
+
+    if (dateStr === todayStr) {
+      const currentHour = now.getHours();
+      const currentMinutes = now.getMinutes();
+
+      slots = slots.filter(slot => {
+        // Assume que o slot vem como "02:30 PM"
+        const [time, modifier] = slot.split(' ');
+        let [hours, minutes] = time.split(':').map(Number);
+
+        // Converte para 24h para comparar com o relógio do sistema
+        if (modifier === 'PM' && hours < 12) hours += 12;
+        if (modifier === 'AM' && hours === 12) hours = 0;
+
+        return hours > currentHour || (hours === currentHour && minutes > currentMinutes);
       });
-      setAvailableSlots(response.data.available_slots);
-    } catch (error) {
-      console.error('Error fetching slots:', error);
-      toast.error('Failed to load available times');
-    } finally {
-      setLoading(false);
     }
-  };
+
+    setAvailableSlots(slots);
+  } catch (error) {
+    console.error('Error fetching slots:', error);
+    toast.error('Failed to load available times');
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handleServiceSelect = (service) => {
     setSelectedService(service);
@@ -127,7 +152,8 @@ export default function BookingFlow() {
 
   const handleDateSelect = (date) => {
     setSelectedDate(date);
-    setSelectedTime(null);
+    setSelectedTime(null); // Limpa o horário selecionado ao mudar a data
+    setAvailableSlots([]); // Limpa a lista antiga para evitar confusão visual enquanto carrega
   };
 
   const handleTimeSelect = (time) => {
@@ -262,6 +288,7 @@ export default function BookingFlow() {
                     selected={selectedDate}
                     onSelect={handleDateSelect}
                     disabled={isPastDate}
+                    locale={enUS}
                     className="rounded-md border border-white/20 bg-black/40 text-white"
                     data-testid="booking-calendar"
                   />
