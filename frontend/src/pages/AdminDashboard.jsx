@@ -18,6 +18,7 @@ import {
   Ban,
   LogOut,
   History,
+  Trash2,
   Plus,
 } from 'lucide-react';
 import { format } from 'date-fns';
