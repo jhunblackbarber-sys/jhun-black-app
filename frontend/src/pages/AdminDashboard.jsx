@@ -200,7 +200,7 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-black">
-      {/* Header */}
+      {/* Header e Stats */}
       <div className="border-b border-[#FFD700]/30">
         <div className="max-w-7xl mx-auto px-4 py-6 flex items-center justify-between">
           <div>
@@ -238,7 +238,8 @@ export default function AdminDashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-white/50 text-sm">Faturação Mês</p>
-                <h3 className="text-[#FFD700] text-3xl font-bold mt-2">€{stats.monthly_revenue}</h3>
+                {/* Alterado para Dólar abaixo */}
+                <h3 className="text-[#FFD700] text-3xl font-bold mt-2">${stats.monthly_revenue}</h3>
               </div>
               <DollarSign className="w-10 h-10 text-[#FFD700]/20" />
             </div>
@@ -269,7 +270,7 @@ export default function AdminDashboard() {
                   <Calendar 
                     mode="single" 
                     selected={selectedDates[0]} 
-                    onSelect={(d) => setSelectedDates([d])} 
+                    onSelect={(d) => d && setSelectedDates([d])} 
                     className="rounded-md border border-white/10 bg-black/40 text-white" 
                   />
                 </div>
