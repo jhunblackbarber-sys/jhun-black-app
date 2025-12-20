@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-// Adicionado ChevronDown e Globe para o novo menu de idiomas
 import { Phone, MapPin, Instagram, Globe, Calendar, ChevronDown } from 'lucide-react';
 
 export default function LandingPage() {
@@ -29,7 +28,7 @@ export default function LandingPage() {
       subtitle: 'Melhor barbeiro de Tampa • Corte brasileiro com acabamento perfeito',
       bookButton: 'AGENDAR AGORA',
       address: '4023 W. Waters Ave Suite #1, Tampa, FL 33614',
-      phone: '(813) 735-2691', // Corrigido de 2601 para 2691
+      phone: '(813) 735-2691',
       hours: 'Horário: Seg-Sáb 9:00 AM - 9:00 PM',
       whyUs: 'POR QUE NOS ESCOLHER',
       reason1: 'Expertise Brasileira',
@@ -60,7 +59,7 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen relative overflow-x-hidden">
-      {/* Background - Mantido exatamente como o seu */}
+      {/* Background */}
       <div 
         className="fixed inset-0 z-0"
         style={{
@@ -72,7 +71,7 @@ export default function LandingPage() {
       />
       <div className="fixed inset-0 z-0 bg-black/50" />
 
-      {/* NOVO MENU DE IDIOMAS - Substitui os botões lado a lado para economizar espaço */}
+      {/* Language Dropdown */}
       <div className="absolute top-6 right-6 z-50">
         <div className="relative group">
           <Button
@@ -87,31 +86,31 @@ export default function LandingPage() {
             <ChevronDown className="w-4 h-4 ml-1 opacity-50 group-hover:rotate-180 transition-transform" />
           </Button>
           
-        {/* Dropdown Menu - Ajustado para não sumir no PC */}
-        <div className="absolute right-0 mt-0 pt-1 hidden group-hover:flex flex-col gap-1 bg-black/95 border border-[#FFC107]/30 p-1 rounded-md shadow-2xl min-w-[110px]">
-          {['en', 'pt', 'es'].map((lang) => (
-            <Button
-              key={lang}
-              variant="ghost"
-              size="sm"
-              onClick={() => setLanguage(lang)}
-              className={`text-white hover:bg-[#FFC107] hover:text-black justify-start px-4 ${language === lang ? 'text-[#FFC107]' : ''}`}
-            >
-              {lang === 'en' ? '🇺🇸 EN' : lang === 'pt' ? '🇧🇷 PT' : '🇪🇸 ES'}
+          <div className="absolute right-0 mt-0 pt-1 hidden group-hover:flex flex-col gap-1 bg-black/95 border border-[#FFC107]/30 p-1 rounded-md shadow-2xl min-w-[110px]">
+            {['en', 'pt', 'es'].map((lang) => (
+              <Button
+                key={lang}
+                variant="ghost"
+                size="sm"
+                onClick={() => setLanguage(lang)}
+                className={`text-white hover:bg-[#FFC107] hover:text-black justify-start px-4 ${language === lang ? 'text-[#FFC107]' : ''}`}
+              >
+                {lang === 'en' ? '🇺🇸 EN' : lang === 'pt' ? '🇧🇷 PT' : '🇪🇸 ES'}
               </Button>
-          ))}
+            ))}
           </div>
         </div>
       </div>
 
-      {/* Hero Section - Mantida a sua estrutura e animações */}
+      {/* Hero Section */}
       <div className="relative z-10 flex flex-col items-center justify-center min-h-screen px-4 text-center">
+        {/* Logo Reduzida */}
         <div className="mb-8 animate-fade-in-up">
-          <div className="w-48 h-48 md:w-64 md:h-64 mx-auto rounded-full bg-white flex items-center justify-center shadow-2xl">
+          <div className="w-40 h-40 md:w-52 md:h-52 mx-auto rounded-full bg-white flex items-center justify-center shadow-2xl">
             <img 
               src="https://customer-assets.emergentagent.com/job_jhunblack/artifacts/qsmwfje6_Design%20sem%20nome.png"
               alt="Jhun Black Barber Logo"
-              className="w-32 h-32 md:w-44 md:h-44"
+              className="w-28 h-28 md:w-36 md:h-36"
             />
           </div>
         </div>
@@ -120,7 +119,7 @@ export default function LandingPage() {
           className="text-[#FFC107] text-6xl sm:text-7xl md:text-8xl lg:text-9xl font-bold mb-6 animate-fade-in-up"
           style={{
             animationDelay: '0.2s',
-            fontFamily: 'Bebas Neue, sans-serif', // Ajustado de cursive para sans-serif para melhor compatibilidade
+            fontFamily: 'Bebas Neue, sans-serif',
             letterSpacing: '0.08em',
             textShadow: '0 0 16px rgba(255, 193, 7, 0.3), 2px 2px 4px rgba(0, 0, 0, 0.8)'
           }}
@@ -145,11 +144,18 @@ export default function LandingPage() {
           {t.bookButton}
         </Button>
 
-        {/* Contact Info - Adicionado pb-24 para não ficar por baixo da logo do rodapé */}
+        {/* Contact Info - Link do Mapa Adicionado */}
         <div className="mt-20 pb-24 space-y-4 text-white/90 animate-fade-in-up" style={{animationDelay: '0.8s'}}>
           <div className="flex items-center justify-center space-x-3">
             <MapPin className="w-5 h-5 text-[#FFC107]" />
-            <span className="text-sm md:text-base">{t.address}</span>
+            <a 
+              href="https://www.google.com/maps/search/?api=1&query=4023+W.+Waters+Ave+Suite+%231,+Tampa,+FL+33614" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-sm md:text-base hover:text-[#FFC107] transition-colors underline-offset-4 hover:underline"
+            >
+              {t.address}
+            </a>
           </div>
           <div className="flex items-center justify-center space-x-3">
             <Phone className="w-5 h-5 text-[#FFC107]" />
@@ -163,7 +169,7 @@ export default function LandingPage() {
         </div>
       </div>
 
-      {/* Why Choose Us Section - pb-32 para evitar sobreposição */}
+      {/* Why Choose Us Section */}
       <div className="relative z-10 bg-black/95 py-20 px-4 border-t border-[#FFC107]/30 pb-32">
         <div className="max-w-6xl mx-auto">
           <h3 className="text-[#FFC107] text-4xl md:text-5xl font-bold text-center mb-16" style={{fontFamily: 'Bebas Neue, sans-serif'}}>{t.whyUs}</h3>
