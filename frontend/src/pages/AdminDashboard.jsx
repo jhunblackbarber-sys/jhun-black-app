@@ -166,14 +166,16 @@ export default function AdminDashboard() {
   };
 
   const handleDeleteAppointment = async (id) => {
-    if (window.confirm("Deseja excluir este registo permanentemente?")) {
+    if (window.confirm("Deseja cancelar este agendamento?")) {
       try {
-        await axios.delete(`${API}/appointments/${id}`);
-        toast.success('Registo eliminado');
+        // Mudamos de DELETE para PATCH para evitar o erro 405
+        await axios.patch(`${API}/appointments/${id}`, { status: 'cancelled' });
+        toast.success('Agendamento cancelado com sucesso');
         fetchDashboardData();
         if (selectedDates[0]) fetchAppointmentsByDate(selectedDates[0]);
       } catch (error) {
-        toast.error('Erro ao eliminar');
+        console.error('Erro ao cancelar:', error);
+        toast.error('O servidor não permitiu excluir. Tente apenas cancelar.');
       }
     }
   };
