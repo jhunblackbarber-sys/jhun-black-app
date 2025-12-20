@@ -1,4 +1,4 @@
-import minhaLogo from './assets/logo.png';
+import minhaLogo from './assets/LOGO.png';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
