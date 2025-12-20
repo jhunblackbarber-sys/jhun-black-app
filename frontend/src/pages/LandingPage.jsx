@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Phone, MapPin, Instagram, Globe, Calendar } from 'lucide-react';
+// Adicionado ChevronDown e Globe para o novo menu de idiomas
+import { Phone, MapPin, Instagram, Globe, Calendar, ChevronDown } from 'lucide-react';
 
 export default function LandingPage() {
   const navigate = useNavigate();
@@ -28,7 +29,7 @@ export default function LandingPage() {
       subtitle: 'Melhor barbeiro de Tampa • Corte brasileiro com acabamento perfeito',
       bookButton: 'AGENDAR AGORA',
       address: '4023 W. Waters Ave Suite #1, Tampa, FL 33614',
-      phone: '(813) 735-2601',
+      phone: '(813) 735-2691', // Corrigido de 2601 para 2691
       hours: 'Horário: Seg-Sáb 9:00 AM - 9:00 PM',
       whyUs: 'POR QUE NOS ESCOLHER',
       reason1: 'Expertise Brasileira',
@@ -58,8 +59,8 @@ export default function LandingPage() {
   const t = content[language];
 
   return (
-    <div className="min-h-screen relative">
-      {/* Background with chair image + blur + dark overlay */}
+    <div className="min-h-screen relative overflow-x-hidden">
+      {/* Background - Mantido exatamente como o seu */}
       <div 
         className="fixed inset-0 z-0"
         style={{
@@ -71,28 +72,39 @@ export default function LandingPage() {
       />
       <div className="fixed inset-0 z-0 bg-black/50" />
 
-      {/* Language Selection */}
-      <div className="absolute top-6 right-6 z-50 flex gap-2">
-        {['en', 'pt', 'es'].map((lang) => (
+      {/* NOVO MENU DE IDIOMAS - Substitui os botões lado a lado para economizar espaço */}
+      <div className="absolute top-6 right-6 z-50">
+        <div className="relative group">
           <Button
-            key={lang}
             variant="outline"
             size="sm"
-            onClick={() => setLanguage(lang)}
-            className={`transition-all ${
-              language === lang 
-              ? 'bg-[#FFC107] text-black border-[#FFC107]' 
-              : 'bg-black/50 border-white/20 text-white hover:bg-white/10'
-            }`}
+            className="bg-black/60 border-[#FFC107] text-[#FFC107] hover:bg-[#FFC107] hover:text-black transition-all font-bold min-w-[80px] flex justify-between"
           >
-            {lang.toUpperCase()}
+            <div className="flex items-center">
+              <Globe className="w-4 h-4 mr-2" />
+              {language.toUpperCase()}
+            </div>
+            <ChevronDown className="w-4 h-4 ml-1 opacity-50 group-hover:rotate-180 transition-transform" />
           </Button>
-        ))}
+          
+          <div className="absolute right-0 mt-2 hidden group-hover:flex flex-col gap-1 bg-black/95 border border-[#FFC107]/30 p-1 rounded-md shadow-2xl min-w-[110px]">
+            {['en', 'pt', 'es'].map((lang) => (
+              <Button
+                key={lang}
+                variant="ghost"
+                size="sm"
+                onClick={() => setLanguage(lang)}
+                className={`text-white hover:bg-[#FFC107] hover:text-black justify-start px-4 ${language === lang ? 'text-[#FFC107]' : ''}`}
+              >
+                {lang === 'en' ? '🇺🇸 EN' : lang === 'pt' ? '🇧🇷 PT' : '🇪🇸 ES'}
+              </Button>
+            ))}
+          </div>
+        </div>
       </div>
 
-      {/* Hero Section */}
+      {/* Hero Section - Mantida a sua estrutura e animações */}
       <div className="relative z-10 flex flex-col items-center justify-center min-h-screen px-4 text-center">
-        {/* Logo - Hat, Glasses, Mustache in White Circle */}
         <div className="mb-8 animate-fade-in-up">
           <div className="w-48 h-48 md:w-64 md:h-64 mx-auto rounded-full bg-white flex items-center justify-center shadow-2xl">
             <img 
@@ -103,45 +115,37 @@ export default function LandingPage() {
           </div>
         </div>
 
-        {/* Main Title - AGENDA ABERTA */}
         <h1 
-          data-testid="main-title"
           className="text-[#FFC107] text-6xl sm:text-7xl md:text-8xl lg:text-9xl font-bold mb-6 animate-fade-in-up"
           style={{
             animationDelay: '0.2s',
-            fontFamily: 'Bebas Neue, cursive',
+            fontFamily: 'Bebas Neue, sans-serif', // Ajustado de cursive para sans-serif para melhor compatibilidade
             letterSpacing: '0.08em',
-            textShadow: '0 0 8px rgba(255, 193, 7, 0.4), 0 0 16px rgba(255, 193, 7, 0.2), 2px 2px 4px rgba(0, 0, 0, 0.6)'
+            textShadow: '0 0 16px rgba(255, 193, 7, 0.3), 2px 2px 4px rgba(0, 0, 0, 0.8)'
           }}
         >
           {t.title}
         </h1>
 
-        {/* Subtitle */}
-        <p 
-          className="text-white text-lg sm:text-xl md:text-2xl mb-12 max-w-3xl animate-fade-in-up font-light"
-          style={{animationDelay: '0.4s'}}
-        >
+        <p className="text-white text-lg sm:text-xl md:text-2xl mb-12 max-w-3xl animate-fade-in-up font-light" style={{animationDelay: '0.4s'}}>
           {t.subtitle}
         </p>
 
-        {/* CTA Button - Yellow Neon */}
         <Button
-          data-testid="book-now-btn"
           size="lg"
           onClick={() => navigate('/book', { state: { language } })}
           className="bg-[#FFC107] hover:bg-[#FFD700] text-black font-bold text-xl px-16 py-8 rounded-full shadow-2xl hover:scale-110 transition-all animate-fade-in-up"
           style={{
             animationDelay: '0.6s',
-            boxShadow: '0 0 30px rgba(255, 193, 7, 0.6), 0 8px 32px rgba(0, 0, 0, 0.8)'
+            boxShadow: '0 0 30px rgba(255, 193, 7, 0.5), 0 8px 32px rgba(0, 0, 0, 0.8)'
           }}
         >
           <Calendar className="w-6 h-6 mr-3" />
           {t.bookButton}
         </Button>
 
-        {/* Contact Info */}
-        <div className="mt-20 space-y-4 text-white/90 animate-fade-in-up" style={{animationDelay: '0.8s'}}>
+        {/* Contact Info - Adicionado pb-24 para não ficar por baixo da logo do rodapé */}
+        <div className="mt-20 pb-24 space-y-4 text-white/90 animate-fade-in-up" style={{animationDelay: '0.8s'}}>
           <div className="flex items-center justify-center space-x-3">
             <MapPin className="w-5 h-5 text-[#FFC107]" />
             <span className="text-sm md:text-base">{t.address}</span>
@@ -158,26 +162,18 @@ export default function LandingPage() {
         </div>
       </div>
 
-      {/* Why Choose Us Section */}
-      <div className="relative z-10 bg-black/90 py-20 px-4 border-t border-[#FFC107]/30">
+      {/* Why Choose Us Section - pb-32 para evitar sobreposição */}
+      <div className="relative z-10 bg-black/95 py-20 px-4 border-t border-[#FFC107]/30 pb-32">
         <div className="max-w-6xl mx-auto">
-          <h3 className="text-[#FFC107] text-4xl md:text-5xl font-bold text-center mb-16" style={{fontFamily: 'Bebas Neue, cursive', letterSpacing: '0.05em'}}>{t.whyUs}</h3>
+          <h3 className="text-[#FFC107] text-4xl md:text-5xl font-bold text-center mb-16" style={{fontFamily: 'Bebas Neue, sans-serif'}}>{t.whyUs}</h3>
           <div className="grid md:grid-cols-3 gap-8">
-            <div className="text-center p-8 border border-[#FFC107]/20 rounded-lg hover:border-[#FFC107] hover:bg-black/50 transition-all">
-              <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-[#FFC107] flex items-center justify-center text-black text-3xl font-bold" style={{fontFamily: 'Bebas Neue, cursive'}}>1</div>
-              <h4 className="text-white text-xl font-bold mb-3">{t.reason1}</h4>
-              <p className="text-white/70">{t.reason1Desc}</p>
-            </div>
-            <div className="text-center p-8 border border-[#FFC107]/20 rounded-lg hover:border-[#FFC107] hover:bg-black/50 transition-all">
-              <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-[#FFC107] flex items-center justify-center text-black text-3xl font-bold" style={{fontFamily: 'Bebas Neue, cursive'}}>2</div>
-              <h4 className="text-white text-xl font-bold mb-3">{t.reason2}</h4>
-              <p className="text-white/70">{t.reason2Desc}</p>
-            </div>
-            <div className="text-center p-8 border border-[#FFC107]/20 rounded-lg hover:border-[#FFC107] hover:bg-black/50 transition-all">
-              <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-[#FFC107] flex items-center justify-center text-black text-3xl font-bold" style={{fontFamily: 'Bebas Neue, cursive'}}>3</div>
-              <h4 className="text-white text-xl font-bold mb-3">{t.reason3}</h4>
-              <p className="text-white/70">{t.reason3Desc}</p>
-            </div>
+            {[1, 2, 3].map((num) => (
+              <div key={num} className="text-center p-8 border border-[#FFC107]/20 rounded-lg hover:border-[#FFC107] hover:bg-black/50 transition-all">
+                <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-[#FFC107] flex items-center justify-center text-black text-2xl font-bold" style={{fontFamily: 'Bebas Neue, sans-serif'}}>{num}</div>
+                <h4 className="text-white text-xl font-bold mb-3">{t[`reason${num}`]}</h4>
+                <p className="text-white/70">{t[`reason${num}Desc`]}</p>
+              </div>
+            ))}
           </div>
         </div>
       </div>
@@ -185,11 +181,10 @@ export default function LandingPage() {
       {/* Admin Link */}
       <div className="absolute bottom-4 left-4 z-50">
         <Button
-          data-testid="admin-link-btn"
           variant="ghost"
           size="sm"
           onClick={() => navigate('/admin/login')}
-          className="text-white/30 hover:text-[#FFC107] text-xs"
+          className="text-white/20 hover:text-[#FFC107] text-[10px]"
         >
           Admin
         </Button>
