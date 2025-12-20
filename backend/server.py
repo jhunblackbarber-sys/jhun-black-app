@@ -265,42 +265,77 @@ async def create_appointment(appointment_data: AppointmentCreate):
     # 1. Notificacao SMS Mock
     send_notification_mock("sms", appointment_data.customer_phone, notification_data, appointment_data.language)
 
-    # 2. Notificacao de E-mail (Cliente e Admin)
-    # A verificação agora é apenas se o SendGrid (sg_client) está configurado
+    # --- DICIONÁRIO DE TRADUÇÕES PARA O E-MAIL ---
+    email_content = {
+        "en": {
+            "subject": "New Appointment Confirmation",
+            "title": "Booking Confirmation",
+            "subtitle": "A new time slot has been reserved at",
+            "client": "Customer",
+            "service": "Service",
+            "date": "Date",
+            "time": "Time",
+            "phone": "Phone",
+            "footer": "This is an automated email sent to the customer and administration."
+        },
+        "pt": {
+            "subject": "Confirmação de Agendamento",
+            "title": "Confirmação de Agendamento",
+            "subtitle": "Um novo horário foi reservado na",
+            "client": "Cliente",
+            "service": "Serviço",
+            "date": "Data",
+            "time": "Hora",
+            "phone": "Telefone",
+            "footer": "Este é um e-mail automático enviado para a administração e para o cliente."
+        },
+        "es": {
+            "subject": "Confirmación de Cita",
+            "title": "Confirmación de Cita",
+            "subtitle": "Se ha reservado un nuevo horario en",
+            "client": "Cliente",
+            "service": "Servicio",
+            "date": "Fecha",
+            "time": "Hora",
+            "phone": "Teléfono",
+            "footer": "Este es un correo electrónico automático enviado a la administración y al cliente."
+        }
+    }
+
+    # Seleciona o idioma (padrão inglês se não encontrar)
+    lang = appointment_data.language if appointment_data.language in email_content else "en"
+    texts = email_content[lang]
+
+    # --- ENVIO DO E-MAIL ---
     if sg_client:
         try:
-            # Lista de destinatários começa SEMPRE com o Admin (seu marido)
+            # Envia sempre para o admin (marido)
             destinatarios = [ADMIN_EMAIL]
-            
-            # Se o cliente forneceu e-mail, adiciona ele na lista
+            # Adiciona o cliente se ele preencheu o e-mail
             if appointment_data.customer_email and appointment_data.customer_email.strip():
                 destinatarios.append(appointment_data.customer_email)
 
-            # Cria o e-mail
             email_msg = Mail(
                 from_email=FROM_EMAIL,
                 to_emails=destinatarios,
-                subject=f"Novo Agendamento: {service['name']} - {appointment_data.customer_name}",
+                subject=f"{texts['subject']}: {service['name']} - {appointment_data.customer_name}",
                 html_content=f"""
                 <div style="font-family: sans-serif; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">
-                    <h2 style="color: #333;">Confirmação de Agendamento</h2>
-                    <p>Um novo horário foi reservado na <strong>Jhun Black Barber</strong>.</p>
+                    <h2 style="color: #333;">{texts['title']}</h2>
+                    <p>{texts['subtitle']} <strong>Jhun Black Barber</strong>.</p>
                     <hr style="border: 0; border-top: 1px solid #eee;">
-                    <p><strong>Cliente:</strong> {appointment_data.customer_name}</p>
-                    <p><strong>Serviço:</strong> {service['name']}</p>
-                    <p><strong>Data:</strong> {date}</p>
-                    <p><strong>Hora:</strong> {time}</p>
-                    <p><strong>Telefone do Cliente:</strong> {appointment_data.customer_phone}</p>
+                    <p><strong>{texts['client']}:</strong> {appointment_data.customer_name}</p>
+                    <p><strong>{texts['service']}:</strong> {service['name']}</p>
+                    <p><strong>{texts['date']}:</strong> {date}</p>
+                    <p><strong>{texts['time']}:</strong> {time}</p>
+                    <p><strong>{texts['phone']}:</strong> {appointment_data.customer_phone}</p>
                     <br>
-                    <p style="font-size: 12px; color: #666;">Este é um e-mail automático enviado para a administração e para o cliente (se fornecido).</p>
+                    <p style="font-size: 12px; color: #666;">{texts['footer']}</p>
                 </div>
                 """
             )
-            
-            # Envia
             sg_client.send(email_msg)
             print(f"E-mail enviado para: {destinatarios}")
-            
         except Exception as e:
             print(f"Erro ao enviar e-mail: {e}")
 
