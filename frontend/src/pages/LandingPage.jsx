@@ -37,6 +37,21 @@ export default function LandingPage() {
       reason2Desc: 'Produtos de alta qualidade e atenção aos detalhes',
       reason3: 'Localização Conveniente',
       reason3Desc: 'Fácil de encontrar em Tampa, FL',
+    },
+    es: {
+      title: 'JHUN BLACK BARBER',
+      subtitle: 'Mejor barbero en Tampa • Corte brasileño con acabado perfecto',
+      bookButton: 'RESERVAR AHORA',
+      address: '4023 W. Waters Ave Suite #1, Tampa, FL 33614',
+      phone: '(813) 735-2691',
+      hours: 'Horario: Lun-Sáb 9:00 AM - 9:00 PM',
+      whyUs: 'POR QUÉ ELEGIRNOS',
+      reason1: 'Experiencia Brasileña',
+      reason1Desc: 'Técnicas auténticas de barbería brasileña',
+      reason2: 'Servicio Premium',
+      reason2Desc: 'Productos de alta calidad y atención al detalle',
+      reason3: 'Ubicación Conveniente',
+      reason3Desc: 'Fácil de encontrar en Tampa, FL',
     }
   };
 
@@ -56,18 +71,23 @@ export default function LandingPage() {
       />
       <div className="fixed inset-0 z-0 bg-black/50" />
 
-      {/* Language Toggle */}
-      <div className="absolute top-6 right-6 z-50">
-        <Button
-          data-testid="language-toggle-btn"
-          variant="outline"
-          size="sm"
-          onClick={() => setLanguage(language === 'en' ? 'pt' : 'en')}
-          className="bg-black/50 border-[#FFC107] text-[#FFC107] hover:bg-[#FFC107] hover:text-black transition-all"
-        >
-          <Globe className="w-4 h-4 mr-2" />
-          {language === 'en' ? 'PT' : 'EN'}
-        </Button>
+      {/* Language Selection */}
+      <div className="absolute top-6 right-6 z-50 flex gap-2">
+        {['en', 'pt', 'es'].map((lang) => (
+          <Button
+            key={lang}
+            variant="outline"
+            size="sm"
+            onClick={() => setLanguage(lang)}
+            className={`transition-all ${
+              language === lang 
+              ? 'bg-[#FFC107] text-black border-[#FFC107]' 
+              : 'bg-black/50 border-white/20 text-white hover:bg-white/10'
+            }`}
+          >
+            {lang.toUpperCase()}
+          </Button>
+        ))}
       </div>
 
       {/* Hero Section */}
@@ -128,7 +148,7 @@ export default function LandingPage() {
           </div>
           <div className="flex items-center justify-center space-x-3">
             <Phone className="w-5 h-5 text-[#FFC107]" />
-            <a href="tel:8137352601" className="text-sm md:text-base hover:text-[#FFC107] transition-colors">{t.phone}</a>
+            <a href="tel:8137352691" className="text-sm md:text-base hover:text-[#FFC107] transition-colors">{t.phone}</a>
           </div>
           <div className="flex items-center justify-center space-x-3">
             <Instagram className="w-5 h-5 text-[#FFC107]" />
